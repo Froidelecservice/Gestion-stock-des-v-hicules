@@ -260,8 +260,34 @@
             <button class="btn" style="background:#17a2b8;" onclick="importerCatalogueCSV()">Importer le Catalogue Général</button>
 
             <hr style="margin: 25px 0; border: 0; border-top: 1px solid #ddd;">
-
-            <h3>Rechercher dans le catalogue</h3>
+    <h3>Ajouter ou modifier un article à l'unité</h3>
+    <p class="info-note">Si la référence existe déjà, ses informations seront mises à jour automatiquement.</p>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div>
+            <label for="catRef">Référence fabricant *</label>
+            <input id="catRef" placeholder="Ex: REF-4502">
+        </div>
+        <div>
+            <label for="catRefCodial">Référence Codial</label>
+            <input id="catRefCodial" placeholder="Ex: COD-1234">
+        </div>
+        <div style="grid-column: span 2;">
+            <label for="catIntitule">Dénomination / Intitulé *</label>
+            <input id="catIntitule" placeholder="Ex: Compresseur Danfoss 12V">
+        </div>
+        <div>
+            <label for="catMarque">Marque</label>
+            <input id="catMarque" placeholder="Ex: DANFOSS">
+        </div>
+        <div>
+            <label for="catFournisseur">Fournisseur</label>
+            <input id="catFournisseur" placeholder="Ex: GFF / Cofriset">
+        </div>
+    </div>
+    <button class="btn" onclick="ajouterArticleCatalogue()">Enregistrer l'article dans le catalogue</button>
+ 
+           <h4>Rechercher dans le catalogue</h4>
             <input id="rechercheCatalogue" onkeyup="filtrerCatalogue()" placeholder="Filtrer par référence, dénomination ou marque...">
             <table>
                 <thead>
@@ -658,6 +684,43 @@ window.importerCSV = function() {
         await chargerStocks();
     };
     lecteur.readAsText(fichier, "UTF-8");
+};
+window.ajouterArticleCatalogue = async function() {
+    const refFabricant = document.getElementById("catRef").value.trim().toUpperCase();
+    const refCodial = document.getElementById("catRefCodial").value.trim().toUpperCase();
+    const intitule = document.getElementById("catIntitule").value.trim();
+    const marque = document.getElementById("catMarque").value.trim().toUpperCase();
+    const fournisseur = document.getElementById("catFournisseur").value.trim();
+
+    const reference = refFabricant || refCodial;
+
+    if (!reference || !intitule) {
+        alert("Veuillez saisir au minimum une référence et une dénomination.");
+        return;
+    }
+
+    const docId = reference.replace(/\//g, "-");
+
+    try {
+        await setDoc(doc(db, "catalogue", docId), {
+            reference,
+            refCodial,
+            intitule,
+            marque,
+            fournisseur
+        }, { merge: true });
+
+        alert("Article " + reference + " enregistré dans le catalogue !");
+        document.getElementById("catRef").value = "";
+        document.getElementById("catRefCodial").value = "";
+        document.getElementById("catIntitule").value = "";
+        document.getElementById("catMarque").value = "";
+        document.getElementById("catFournisseur").value = "";
+        await chargerCatalogue();
+    } catch (error) {
+        console.error("Erreur ajout catalogue :", error);
+        alert("Erreur : " + error.message);
+    }
 };
 
 window.importerCatalogueCSV = function() {

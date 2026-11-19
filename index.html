@@ -269,7 +269,7 @@
 
     const firebaseConfig = {
         apiKey: "AIzaSyBEOR50lOpNHSzIPgm5PjJag2hloFMdXC0",
-        authDomain: "gestion-stock-v.firebaseapp.com",
+        authDomain: "://firebaseapp.com",
         projectId: "gestion-stock-v",
         storageBucket: "gestion-stock-v.firebasestorage.app",
         messagingSenderId: "654462305612",
@@ -277,8 +277,11 @@
         measurementId: "G-LQWSPV92NB"
     };
 
-    let cacheStocks = [];
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
+    let cacheStocks = [];
+    
     window.showSection = function(id) {
         document.querySelectorAll(".section").forEach(section => section.classList.remove("active"));
         document.getElementById(id).classList.add("active");

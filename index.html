@@ -177,6 +177,13 @@
             <input id="stockQte" type="number" min="0" placeholder="Ex: 10">
 
             <button class="btn" onclick="enregistrerStock()">Valider le stock</button>
+
+            <hr style="margin: 25px 0; border: 0; border-top: 1px solid #ddd;">
+            <h3>Importer un fichier Excel complet (CSV) pour ce véhicule</h3>
+            <p class="info-note">Sélectionnez d'abord le <b>Véhicule destinataire</b> ci-dessus, puis choisissez votre fichier CSV.</p>
+            <input type="file" id="fichierCSV" accept=".csv">
+            <button class="btn" style="background:#004A99;" onclick="importerCSV()">Importer le fichier du véhicule</button>
+
         </div>
 
         <!-- Création Véhicule -->
@@ -543,6 +550,86 @@
             alert("Erreur : " + error.message);
         }
     };
+window.importerCSV = function() {
+    const immat = document.getElementById("selectVehiculeStock").value;
+    if (!immat) {
+        alert("Veuillez d'abord sélectionner un véhicule destinataire dans la liste au-dessus !");
+        return;
+    }
+
+    const input = document.getElementById("fichierCSV");
+    const fichier = input.files;
+
+    if (!fichier) {
+        alert("Veuillez sélectionner votre fichier CSV.");
+        return;
+    }
+
+    const lecteur = new FileReader();
+    lecteur.onload = async function(e) {
+        const lignes = e.target.result.split(/\r?\n/);
+        let compteur = 0;
+
+        for (let i = 1; i < lignes.length; i++) {
+            const ligne = lignes[i].trim();
+            if (!ligne) continue;
+
+            const cols = ligne.includes(";") ? ligne.split(";") : ligne.split(",");
+            if (cols.length < 11) continue;
+
+            const refCodial = cols.trim();
+            const fournisseur = cols.trim();
+            const machine = cols.trim();
+            const marque = cols.trim();
+            const materiel = cols.trim();
+            const refFabricant = cols.trim();
+            const reference = (refFabricant || refCodial).toUpperCase();
+            const intitule = cols.trim();
+            const debut = parseInt(cols.trim(), 10) || 0;
+            const entrees = parseInt(cols.trim(), 10) || 0;
+            const sorties = parseInt(cols.trim(), 10) || 0;
+            const quantite = parseInt(cols.trim(), 10);
+            const minimum = parseInt(cols.trim(), 10) || 0;
+
+            if (!reference || !intitule || isNaN(quantite)) continue;
+
+            const donneesArticle = {
+                immat,
+                reference,
+                refCodial,
+                fournisseur,
+                machine,
+                marque,
+                materiel,
+                intitule,
+                debut,
+                entrees,
+                sorties,
+                quantite,
+                minimum
+            };
+
+            const q = query(
+                collection(db, "stocks"),
+                where("immat", "==", immat),
+                where("reference", "==", reference)
+            );
+            const snap = await getDocs(q);
+
+            if (!snap.empty) {
+                await updateDoc(doc(db, "stocks", snap.docs.id), donneesArticle);
+            } else {
+                await addDoc(collection(db, "stocks"), donneesArticle);
+            }
+            compteur++;
+        }
+
+        alert(compteur + " articles importés dans le véhicule " + immat + " !");
+        input.value = "";
+        await chargerStocks();
+    };
+    lecteur.readAsText(fichier, "UTF-8");
+};
 
     chargerVehicules();
     chargerStocks();

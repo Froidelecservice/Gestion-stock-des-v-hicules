@@ -264,7 +264,7 @@
     </div>
 </div>
 <script type="module">
-    const h = ["https:", "", "://gstatic.com", "firebasejs", "10.12.2"].join("/");
+    const h = ["https:/", "www" + ".gstatic.com", "firebasejs", "10.12.2"].join("/");
     const { initializeApp } = await import(h + "/firebase-app.js");
     const { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where } = await import(h + "/firebase-firestore.js");
 

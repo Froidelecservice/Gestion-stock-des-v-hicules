@@ -264,9 +264,9 @@
     </div>
 </div>
 <script type="module">
-    const base = "https://www." + "://gstatic.com";
-    const { initializeApp } = await import(base + "firebase-app.js");
-    const { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where } = await import(base + "firebase-firestore.js");
+    const h = ["https:", "", "://gstatic.com", "firebasejs", "10.12.2"].join("/");
+    const { initializeApp } = await import(h + "/firebase-app.js");
+    const { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where } = await import(h + "/firebase-firestore.js");
 
     const firebaseConfig = {
         apiKey: "AIzaSyBEOR50lOpNHSzIPgm5PjJag2hloFMdXC0",

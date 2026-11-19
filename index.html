@@ -341,7 +341,7 @@
 <script type="module">
     const h = ["https:/", "www" + ".gstatic.com", "firebasejs", "10.12.2"].join("/");
     const { initializeApp } = await import(h + "/firebase-app.js");
-    const { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where, setDoc, writeBatch } = await import(h + "/firebase-firestore.js");
+    const { getFirestore, collection, addDoc, getDocs, getDoc, updateDoc, deleteDoc, doc, query, where, setDoc, writeBatch } = await import(h + "/firebase-firestore.js");
 
     const firebaseConfig = {
         apiKey: "AIzaSyBEOR50lOpNHSzIPgm5PjJag2hloFMdXC0",
@@ -468,26 +468,57 @@
         }
     };
 
-    window.modifierVehicule = async function() {
-        const id = document.getElementById("selectVehiculeImmat").value;
-        const nouvelleImmat = document.getElementById("nouvelleImmat").value.trim().toUpperCase();
+window.modifierVehicule = async function() {
+  const id = document.getElementById("selectVehiculeImmat").value;
+  const nouvelleImmat = document.getElementById("nouvelleImmat").value.trim().toUpperCase();
 
-        if (!id || !nouvelleImmat) {
-            alert("Veuillez sélectionner un véhicule et saisir la nouvelle immatriculation.");
-            return;
-        }
+  if (!id || !nouvelleImmat) {
+    alert("Veuillez sélectionner un véhicule et saisir la nouvelle immatriculation.");
+    return;
+  }
 
-        try {
-            await updateDoc(doc(db, "vehicules", id), { immat: nouvelleImmat });
-            alert("Immatriculation modifiée avec succès !");
-            document.getElementById("nouvelleImmat").value = "";
-            await chargerVehicules();
-        } catch (error) {
-            console.error("Erreur modification :", error);
-            alert("Erreur : " + error.message);
-        }
-    };
+  try {
+    // 1. Récupérer le véhicule actuel pour connaître son ancienne immatriculation
+    const vehiculeRef = doc(db, "vehicules", id);
+    const vehiculeSnap = await getDoc(vehiculeRef);
 
+    if (!vehiculeSnap.exists()) {
+      alert("Véhicule introuvable dans la base de données.");
+      return;
+    }
+
+    const ancienneImmat = vehiculeSnap.data().immat;
+
+    if (ancienneImmat === nouvelleImmat) {
+      alert("La nouvelle immatriculation est identique à l'ancienne.");
+      return;
+    }
+
+    // 2. Rechercher tous les articles liés à l'ancienne immatriculation dans "stocks"
+    const stocksRef = collection(db, "stocks");
+    const q = query(stocksRef, where("immat", "==", ancienneImmat));
+    const querySnapshot = await getDocs(q);
+
+    // 3. Préparer la mise à jour groupée
+    const batch = writeBatch(db);
+    batch.update(vehiculeRef, { immat: nouvelleImmat });
+
+    querySnapshot.forEach((docSnap) => {
+      batch.update(docSnap.ref, { immat: nouvelleImmat });
+    });
+
+    // 4. Exécuter toutes les modifications en une fois
+    await batch.commit();
+
+    alert(`Immatriculation modifiée et ${querySnapshot.size} article(s) réattribué(s) avec succès !`);
+    document.getElementById("nouvelleImmat").value = "";
+    await chargerVehicules();
+
+  } catch (error) {
+    console.error("Erreur lors de la modification :", error);
+    alert("Erreur : " + error.message);
+  }
+};
     window.modifierTechnicien = async function() {
         const id = document.getElementById("selectVehiculeTech").value;
         const nouveauNom = document.getElementById("nouveauNom").value.trim().toUpperCase();

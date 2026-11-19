@@ -264,18 +264,15 @@
     </div>
 </div>
 <script type="module">
- import { initializeApp } from
-        "https://gstatic.com";
-    import {
-        getFirestore, collection, addDoc, getDocs,
-        updateDoc, deleteDoc, doc, query, where
-    } from "https://gstatic.com";
+    const base = "https://www." + "://gstatic.com";
+    const { initializeApp } = await import(base + "firebase-app.js");
+    const { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where } = await import(base + "firebase-firestore.js");
 
     const firebaseConfig = {
         apiKey: "AIzaSyBEOR50lOpNHSzIPgm5PjJag2hloFMdXC0",
-        authDomain: "://firebaseapp.com",
+        authDomain: "gestion-stock-v." + "firebaseapp.com",
         projectId: "gestion-stock-v",
-        storageBucket: "gestion-stock-v.firebasestorage.app",
+        storageBucket: "gestion-stock-v." + "firebasestorage.app",
         messagingSenderId: "654462305612",
         appId: "1:654462305612:web:009b200ee8997bb6793be9",
         measurementId: "G-LQWSPV92NB"
@@ -284,8 +281,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    let cacheStocks = [];
-    
+    let cacheStocks = []; 
     window.showSection = function(id) {
         document.querySelectorAll(".section").forEach(section => section.classList.remove("active"));
         document.getElementById(id).classList.add("active");

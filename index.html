@@ -249,33 +249,33 @@
                 <tbody id="listeVehicules">
                 </tbody>
             </table>
-            <!-- Catalogue Général -->
-<div id="catalogue" class="section">
-    <h2>Catalogue Général des Articles (Référence)</h2>
-    <p class="info-note">Importez ici votre fichier CSV global contenant tous les articles de référence de l'entreprise.</p>
-    
-    <input type="file" id="fichierCatalogueCSV" accept=".csv">
-    <button class="btn" style="background:#17a2b8;" onclick="importerCatalogueCSV()">Importer le Catalogue Général</button>
+        </div>
 
-    <hr style="margin: 25px 0; border: 0; border-top: 1px solid #ddd;">
+        <!-- Catalogue Général -->
+        <div id="catalogue" class="section">
+            <h2>Catalogue Général des Articles (Référence)</h2>
+            <p class="info-note">Importez ici votre fichier CSV global contenant tous les articles de référence de l'entreprise.</p>
+            
+            <input type="file" id="fichierCatalogueCSV" accept=".csv">
+            <button class="btn" style="background:#17a2b8;" onclick="importerCatalogueCSV()">Importer le Catalogue Général</button>
 
-    <h3>Rechercher dans le catalogue</h3>
-    <input id="rechercheCatalogue" onkeyup="filtrerCatalogue()" placeholder="Filtrer par référence, dénomination ou marque...">
-    <table>
-        <thead>
-            <tr>
-                <th>Référence</th>
-                <th>Réf. Codial</th>
-                <th>Dénomination</th>
-                <th>Marque</th>
-                <th>Fournisseur</th>
-            </tr>
-        </thead>
-        <tbody id="listeCatalogue">
-        </tbody>
-    </table>
-</div>
+            <hr style="margin: 25px 0; border: 0; border-top: 1px solid #ddd;">
 
+            <h3>Rechercher dans le catalogue</h3>
+            <input id="rechercheCatalogue" onkeyup="filtrerCatalogue()" placeholder="Filtrer par référence, dénomination ou marque...">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Référence</th>
+                        <th>Réf. Codial</th>
+                        <th>Dénomination</th>
+                        <th>Marque</th>
+                        <th>Fournisseur</th>
+                    </tr>
+                </thead>
+                <tbody id="listeCatalogue">
+                </tbody>
+            </table>
         </div>
 
         <!-- Recherche Stock -->
@@ -587,7 +587,7 @@ window.importerCSV = function() {
     }
 
     const input = document.getElementById("fichierCSV");
-    const fichier = input.files;
+    const fichier = input.files.item(0);
 
     if (!fichier) {
         alert("Veuillez sélectionner votre fichier CSV.");
@@ -606,19 +606,19 @@ window.importerCSV = function() {
             const cols = ligne.includes(";") ? ligne.split(";") : ligne.split(",");
             if (cols.length < 11) continue;
 
-            const refCodial = cols.trim();
-            const fournisseur = cols.trim();
-            const machine = cols.trim();
-            const marque = cols.trim();
-            const materiel = cols.trim();
-            const refFabricant = cols.trim();
+            const refCodial = (cols.at(0) || "").trim();
+            const fournisseur = (cols.at(1) || "").trim();
+            const machine = (cols.at(2) || "").trim();
+            const marque = (cols.at(3) || "").trim();
+            const materiel = (cols.at(4) || "").trim();
+            const refFabricant = (cols.at(5) || "").trim();
             const reference = (refFabricant || refCodial).toUpperCase();
-            const intitule = cols.trim();
-            const debut = parseInt(cols.trim(), 10) || 0;
-            const entrees = parseInt(cols.trim(), 10) || 0;
-            const sorties = parseInt(cols.trim(), 10) || 0;
-            const quantite = parseInt(cols.trim(), 10);
-            const minimum = parseInt(cols.trim(), 10) || 0;
+            const intitule = (cols.at(6) || "").trim();
+            const debut = parseInt((cols.at(7) || "0").trim(), 10) || 0;
+            const entrees = parseInt((cols.at(8) || "0").trim(), 10) || 0;
+            const sorties = parseInt((cols.at(9) || "0").trim(), 10) || 0;
+            const quantite = parseInt((cols.at(10) || "").trim(), 10);
+            const minimum = parseInt((cols.at(11) || "0").trim(), 10) || 0;
 
             if (!reference || !intitule || isNaN(quantite)) continue;
 
@@ -646,7 +646,7 @@ window.importerCSV = function() {
             const snap = await getDocs(q);
 
             if (!snap.empty) {
-                await updateDoc(doc(db, "stocks", snap.docs.id), donneesArticle);
+                await updateDoc(doc(db, "stocks", snap.docs.at(0).id), donneesArticle);
             } else {
                 await addDoc(collection(db, "stocks"), donneesArticle);
             }
@@ -659,11 +659,10 @@ window.importerCSV = function() {
     };
     lecteur.readAsText(fichier, "UTF-8");
 };
-let cacheCatalogue = [];
 
 window.importerCatalogueCSV = function() {
     const input = document.getElementById("fichierCatalogueCSV");
-    const fichier = input.files;
+    const fichier = input.files.item(0);
 
     if (!fichier) {
         alert("Veuillez sélectionner votre fichier CSV du catalogue général.");
@@ -682,14 +681,14 @@ window.importerCatalogueCSV = function() {
             const cols = ligne.includes(";") ? ligne.split(";") : ligne.split(",");
             if (cols.length < 7) continue;
 
-            const refCodial = cols.trim();
-            const fournisseur = cols.trim();
-            const machine = cols.trim();
-            const marque = cols.trim();
-            const materiel = cols.trim();
-            const refFabricant = cols.trim();
+            const refCodial = (cols.at(0) || "").trim();
+            const fournisseur = (cols.at(1) || "").trim();
+            const machine = (cols.at(2) || "").trim();
+            const marque = (cols.at(3) || "").trim();
+            const materiel = (cols.at(4) || "").trim();
+            const refFabricant = (cols.at(5) || "").trim();
             const reference = (refFabricant || refCodial).toUpperCase();
-            const intitule = cols.trim();
+            const intitule = (cols.at(6) || "").trim();
 
             if (!reference || !intitule) continue;
 
@@ -710,7 +709,7 @@ window.importerCatalogueCSV = function() {
             const snap = await getDocs(q);
 
             if (!snap.empty) {
-                await updateDoc(doc(db, "catalogue", snap.docs.id), donneesCatalogue);
+                await updateDoc(doc(db, "catalogue", snap.docs.at(0).id), donneesCatalogue);
             } else {
                 await addDoc(collection(db, "catalogue"), donneesCatalogue);
             }

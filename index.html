@@ -24,7 +24,7 @@
         }
         .container {
             display: flex;
-            min-height: calc(100vh - 58px);
+            min-height: calc(100vh - 98px);
         }
         .menu {
             width: 280px;
@@ -137,6 +137,15 @@
             color: #666;
             margin-bottom: 15px;
         }
+        footer {
+            background: #003366;
+            color: #ffffff;
+            text-align: center;
+            padding: 12px;
+            font-size: 13px;
+            border-top: 2px solid #004A99;
+        }
+
     </style>
 </head>
 <body>
@@ -257,37 +266,37 @@
             <p class="info-note">Importez ici votre fichier CSV global contenant tous les articles de référence de l'entreprise.</p>
             
             <input type="file" id="fichierCatalogueCSV" accept=".csv">
-            <button class="btn" style="background:#17a2b8;" onclick="importerCatalogueCSV()">Importer le Catalogue Général</button>
+            <button id="btnImportCatalogue" class="btn" style="background:#17a2b8;" onclick="importerCatalogueCSV()">Importer le Catalogue Général</button>
 
             <hr style="margin: 25px 0; border: 0; border-top: 1px solid #ddd;">
-    <h3>Ajouter ou modifier un article à l'unité</h3>
-    <p class="info-note">Si la référence existe déjà, ses informations seront mises à jour automatiquement.</p>
-    
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-        <div>
-            <label for="catRef">Référence fabricant *</label>
-            <input id="catRef" placeholder="Ex: REF-4502">
-        </div>
-        <div>
-            <label for="catRefCodial">Référence Codial</label>
-            <input id="catRefCodial" placeholder="Ex: COD-1234">
-        </div>
-        <div style="grid-column: span 2;">
-            <label for="catIntitule">Dénomination / Intitulé *</label>
-            <input id="catIntitule" placeholder="Ex: Compresseur Danfoss 12V">
-        </div>
-        <div>
-            <label for="catMarque">Marque</label>
-            <input id="catMarque" placeholder="Ex: DANFOSS">
-        </div>
-        <div>
-            <label for="catFournisseur">Fournisseur</label>
-            <input id="catFournisseur" placeholder="Ex: GFF / Cofriset">
-        </div>
-    </div>
-    <button class="btn" onclick="ajouterArticleCatalogue()">Enregistrer l'article dans le catalogue</button>
+            <h3>Ajouter ou modifier un article à l'unité</h3>
+            <p class="info-note">Si la référence existe déjà, ses informations seront mises à jour automatiquement.</p>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div>
+                    <label for="catRef">Référence fabricant *</label>
+                    <input id="catRef" placeholder="Ex: REF-4502">
+                </div>
+                <div>
+                    <label for="catRefCodial">Référence Codial</label>
+                    <input id="catRefCodial" placeholder="Ex: COD-1234">
+                </div>
+                <div style="grid-column: span 2;">
+                    <label for="catIntitule">Dénomination / Intitulé *</label>
+                    <input id="catIntitule" placeholder="Ex: Compresseur Danfoss 12V">
+                </div>
+                <div>
+                    <label for="catMarque">Marque</label>
+                    <input id="catMarque" placeholder="Ex: DANFOSS">
+                </div>
+                <div>
+                    <label for="catFournisseur">Fournisseur</label>
+                    <input id="catFournisseur" placeholder="Ex: GFF / Cofriset">
+                </div>
+            </div>
+            <button class="btn" onclick="ajouterArticleCatalogue()">Enregistrer l'article dans le catalogue</button>
  
-           <h4>Rechercher dans le catalogue</h4>
+            <h4 style="margin-top: 25px; margin-bottom: 10px; color: #003366;">Rechercher dans le catalogue</h4>
             <input id="rechercheCatalogue" onkeyup="filtrerCatalogue()" placeholder="Filtrer par référence, dénomination ou marque...">
             <table>
                 <thead>
@@ -324,10 +333,15 @@
         </div>
     </div>
 </div>
+
+<footer>
+    Créé par Robert AURAY &copy; 2026 pour FCM/FES
+</footer>
+
 <script type="module">
     const h = ["https:/", "www" + ".gstatic.com", "firebasejs", "10.12.2"].join("/");
     const { initializeApp } = await import(h + "/firebase-app.js");
-    const { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where } = await import(h + "/firebase-firestore.js");
+    const { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where, setDoc, writeBatch } = await import(h + "/firebase-firestore.js");
 
     const firebaseConfig = {
         apiKey: "AIzaSyBEOR50lOpNHSzIPgm5PjJag2hloFMdXC0",
@@ -342,14 +356,18 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    let cacheStocks = []; 
+    let cacheStocks = [];
+    let cacheCatalogue = [];
+
     window.showSection = function(id) {
         document.querySelectorAll(".section").forEach(section => section.classList.remove("active"));
         document.getElementById(id).classList.add("active");
         if (id === 'recherche') {
             chargerStocks();
         }
-        if (id === 'catalogue') { chargerCatalogue(); }
+        if (id === 'catalogue') { 
+            chargerCatalogue(); 
+        }
     };
 
     function creerCellule(texte) {

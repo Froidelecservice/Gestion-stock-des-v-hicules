@@ -163,6 +163,8 @@
         <button onclick="showSection('technicien')">Changement Technicien</button>
         <button onclick="showSection('consultation')">Consultation Véhicules</button>
         <button onclick="showSection('recherche')">Consultation / Recherche Stock</button>
+        <button class="btn" onclick="ouvrirHistoriqueInventaires()" style="background:#6f42c1;">📂 Inventaires enregistrés</button>
+        <button class="btn" onclick="ouvrirGestionMinimums()" style="background:#e67e22;">⚙️ Stocks minimums véhicules</button>
         <button onclick="window.location.href='index.html'" class="quit">Retour Accueil</button>
     </div>
 
@@ -337,6 +339,78 @@
 <footer>
     Créé par Robert AURAY &copy; 2026 pour FCM/FES
 </footer>
+
+
+<!-- MODALE 1 : HISTORIQUE DES INVENTAIRES (CHEF DE BUREAU) -->
+<div id="modalHistoriqueInv" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:1000; overflow-y:auto;">
+    <div style="background:white; margin:20px auto; padding:20px; width:94%; max-width:1000px; border-radius:8px; box-shadow:0 4px 10px rgba(0,0,0,0.3);">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #ddd; padding-bottom:10px;">
+            <h2 style="margin:0;">📂 Inventaires des Véhicules & Listes des Erreurs</h2>
+            <button onclick="document.getElementById('modalHistoriqueInv').style.display='none'" style="background:#dc3545; color:white; border:none; padding:6px 14px; border-radius:4px; cursor:pointer;">✖ Fermer</button>
+        </div>
+
+        <!-- FILTRE PAR VÉHICULE -->
+        <div style="margin-top:15px; background:#f8f9fa; padding:12px; border-radius:6px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; border:1px solid #ddd;">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <label for="filtreImmatInv" style="margin:0;"><strong>Sélectionner un véhicule :</strong></label>
+                <select id="filtreImmatInv" onchange="filtrerAffichageInventaires()" style="width:auto; margin:0; padding:6px; font-size:15px; border-radius:4px;">
+                    <option value="TOUS">Tous les véhicules</option>
+                </select>
+            </div>
+
+            <div id="zoneActionMajVehicule" style="display:none;">
+                <button id="btnMajStockVehiculeSelect" onclick="mettreAJourStockVehiculeSelectionne()" style="background:#28a745; color:white; border:none; padding:8px 14px; border-radius:4px; font-weight:bold; cursor:pointer;">
+                    🔄 Mettre à jour le stock début de ce véhicule
+                </button>
+            </div>
+        </div>
+
+        <!-- AJOUTEZ CETTE LIGNE QUI MANQUAIT -->
+        <div id="contenuHistoriqueInv" style="margin-top:15px;">Chargement...</div>
+    </div>
+</div>
+<!-- MODALE 2 : GESTION DES STOCKS MINIMUMS (CHEF DE BUREAU) -->
+<div id="modalGestionMin" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:1001; overflow-y:auto;">
+    <div style="background:white; margin:20px auto; padding:20px; width:94%; max-width:1050px; border-radius:8px; box-shadow:0 4px 10px rgba(0,0,0,0.3);">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #ddd; padding-bottom:10px;">
+            <h2 style="margin:0;">⚙️ Gestion des Stocks Minimums par Véhicule</h2>
+            <button onclick="document.getElementById('modalGestionMin').style.display='none'" style="background:#dc3545; color:white; border:none; padding:6px 14px; border-radius:4px; cursor:pointer;">✖ Fermer</button>
+        </div>
+
+        <!-- BARRE DE FILTRE -->
+        <div style="margin-top:15px; background:#f8f9fa; padding:12px; border-radius:6px; display:flex; flex-wrap:wrap; gap:15px; align-items:center;">
+            <div>
+                <label for="selectVehiculeMin"><strong>Véhicule :</strong></label>
+                <select id="selectVehiculeMin" onchange="filtrerTableauMinimums()" style="padding:7px; font-size:15px; border-radius:4px;">
+                    <option value="TOUS">Tous les véhicules</option>
+                </select>
+            </div>
+            <div style="flex:1; min-width:220px;">
+                <input type="text" id="searchMinArticle" oninput="filtrerTableauMinimums()" placeholder="Rechercher par Codial, Référence, Dénomination..." style="width:100%; padding:7px; font-size:15px; border:1px solid #ccc; border-radius:4px;">
+            </div>
+        </div>
+
+        <!-- TABLEAU DES STOCKS MINIMUMS -->
+        <div style="width:100%; overflow-x:auto; margin-top:15px;">
+            <table border="1" style="width:100%; min-width:0 !important; border-collapse:collapse; text-align:left; font-size:14px;">
+                <thead style="background:#005A9C; color:white;">
+                    <tr>
+                        <th style="padding:8px;">Véhicule</th>
+                        <th style="padding:8px;">Réf. Codial</th>
+                        <th style="padding:8px;">Réf. Fournisseur</th>
+                        <th style="padding:8px;">Dénomination</th>
+                        <th style="padding:8px; text-align:center;">Stock Actuel</th>
+                        <th style="padding:8px; text-align:center; width:140px;">Stock Minimum</th>
+                        <th style="padding:8px; text-align:center; width:110px;">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="tbodyGestionMin"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
 
 <script type="module">
     const h = ["https:/", "www" + ".gstatic.com", "firebasejs", "10.12.2"].join("/");
@@ -882,7 +956,399 @@ window.filtrerCatalogue = function() {
 
     chargerVehicules();
     chargerStocks();
-</script>
 
+/* ===================================
+   1. CONSULTATION DES INVENTAIRES (CHEF DE BUREAU)
+=================================== */
+let tousLesInventaires = [];
+
+async function ouvrirHistoriqueInventaires() {
+    const modal = document.getElementById("modalHistoriqueInv");
+    const conteneur = document.getElementById("contenuHistoriqueInv");
+    modal.style.display = "block";
+    conteneur.innerHTML = "<p>⏳ Chargement des inventaires depuis Firebase...</p>";
+
+    try {
+        const snapshot = await getDocs(collection(db, "inventaires"));
+        tousLesInventaires = [];
+        const immatsSet = new Set();
+
+        snapshot.forEach(docSnap => {
+            const data = docSnap.data();
+            tousLesInventaires.push({ id: docSnap.id, ...data });
+            if (data.immat) immatsSet.add(data.immat);
+        });
+
+        // Tri du plus récent au plus ancien
+        tousLesInventaires.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        // Remplissage du menu déroulant des véhicules
+        const select = document.getElementById("filtreImmatInv");
+        select.innerHTML = `<option value="TOUS">Tous les véhicules (${tousLesInventaires.length})</option>`;
+        Array.from(immatsSet).sort().forEach(immat => {
+            select.innerHTML += `<option value="${immat}">${immat}</option>`;
+        });
+
+        filtrerAffichageInventaires();
+
+    } catch (error) {
+        console.error("Erreur lecture inventaires :", error);
+        conteneur.innerHTML = "<p style='color:red;'>❌ Impossible de charger les inventaires depuis Firebase.</p>";
+    }
+}
+
+
+
+
+    window.filtrerAffichageInventaires = function() {
+        const filtreImmat = document.getElementById("filtreImmatInv").value;
+        const conteneur = document.getElementById("contenuHistoriqueInv");
+        const zoneAction = document.getElementById("zoneActionMajVehicule");
+        const btnMaj = document.getElementById("btnMajStockVehiculeSelect");
+
+        const listeFiltree = filtreImmat === "TOUS" 
+            ? tousLesInventaires 
+            : tousLesInventaires.filter(inv => inv.immat === filtreImmat);
+
+        // Afficher le bouton de mise à jour uniquement si un véhicule précis est sélectionné et qu'il a un inventaire non clôturé
+        if (filtreImmat !== "TOUS" && listeFiltree.length > 0) {
+            const dernierInv = listeFiltree[0]; // Déjà trié du plus récent au plus ancien
+            zoneAction.style.display = "block";
+            if (dernierInv.cloture) {
+                btnMaj.disabled = true;
+                btnMaj.style.background = "#6c757d";
+                btnMaj.textContent = `✅ Stock de ${filtreImmat} déjà à jour (Inv. du ${dernierInv.dateAffichage})`;
+            } else {
+                btnMaj.disabled = false;
+                btnMaj.style.background = "#28a745";
+                btnMaj.textContent = `🔄 Mettre à jour stock début de ${filtreImmat} (Inv. du ${dernierInv.dateAffichage})`;
+            }
+        } else {
+            zoneAction.style.display = "none";
+        }
+
+        if (listeFiltree.length === 0) {
+            conteneur.innerHTML = "<p>Aucun inventaire trouvé.</p>";
+            return;
+        }
+
+        let html = "";
+        listeFiltree.forEach(inv => {
+            html += `
+                <div style="border:1px solid #ccc; border-radius:6px; padding:15px; margin-bottom:15px; background:#fdfdfd;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                        <div>
+                            <strong style="font-size:16px;">🚚 Véhicule : ${inv.immat}</strong> — 📅 ${inv.dateAffichage}
+                            ${inv.cloture ? `<span style="background:#d4edda; color:#155724; padding:2px 8px; border-radius:4px; font-size:12px; margin-left:8px; font-weight:bold;">✅ Reporté en stock début</span>` : ''}
+                            <br>
+                            <span>Articles contrôlés : <strong>${inv.nbArticlesComptes}</strong> | </span>
+                            <span style="color:${inv.nbErreurs > 0 ? '#d9534f' : '#28a745'}; font-weight:bold;">
+                                ${inv.nbErreurs > 0 ? `⚠️ ${inv.nbErreurs} erreur(s) constatée(s)` : '✅ Stock conforme (0 erreur)'}
+                            </span>
+                        </div>
+                        <div style="display:flex; gap:8px;">
+                            <button onclick="imprimerUnInventaire('${inv.id}')" style="background:#17a2b8; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer;">
+                                🖨️ PDF / Imprimer
+                            </button>
+                            <button onclick="supprimerUnInventaire('${inv.id}')" style="background:#dc3545; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;" title="Supprimer cet inventaire">
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+                    <div id="detail_inv_${inv.id}" style="margin-top:10px; overflow-x:auto;">
+            `;
+
+            if (inv.erreurs && inv.erreurs.length > 0) {
+                html += `
+                    <table border="1" style="width:100%; margin-top:5px; border-collapse:collapse; font-size:14px;">
+                        <thead style="background:#d9534f; color:white;">
+                            <tr>
+                                <th style="padding:6px;">Réf. Codial</th>
+                                <th style="padding:6px;">Réf. Fournisseur</th>
+                                <th style="padding:6px;">Fournisseur</th>
+                                <th style="padding:6px;">Dénomination</th>
+                                <th style="padding:6px; text-align:center;">Stock Théorique</th>
+                                <th style="padding:6px; text-align:center;">Stock Réel</th>
+                                <th style="padding:6px; text-align:center;">Écart</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                inv.erreurs.forEach(err => {
+                    const signe = err.ecart > 0 ? "+" : "";
+                    html += `
+                        <tr>
+                            <td style="padding:5px;">${err.refCodial || "-"}</td>
+                            <td style="padding:5px;">${err.reference || "-"}</td>
+                            <td style="padding:5px;">${err.fournisseur || "-"}</td>
+                            <td style="padding:5px;">${err.denomination || "-"}</td>
+                            <td style="padding:5px; text-align:center; font-weight:bold;">${err.stockTheorique}</td>
+                            <td style="padding:5px; text-align:center; font-weight:bold;">${err.stockReel}</td>
+                            <td style="padding:5px; text-align:center; color:${err.ecart < 0 ? 'red' : 'green'}; font-weight:bold;">${signe}${err.ecart}</td>
+                        </tr>
+                    `;
+                });
+                html += `</tbody></table>`;
+            }
+
+            html += `</div></div>`;
+        });
+
+        conteneur.innerHTML = html;
+    };
+
+    window.mettreAJourStockVehiculeSelectionne = async function() {
+        const immatChoisie = document.getElementById("filtreImmatInv").value;
+        if (!immatChoisie || immatChoisie === "TOUS") return;
+
+        // On récupère le dernier inventaire de ce véhicule
+        const inventairesVehicule = tousLesInventaires.filter(inv => inv.immat === immatChoisie);
+        if (inventairesVehicule.length === 0) return;
+
+        const dernierInv = inventairesVehicule[0];
+        if (dernierInv.cloture) {
+            alert("Ce dernier inventaire a déjà été appliqué au stock début.");
+            return;
+        }
+
+        const msg = 
+            `⚠️ MISE À JOUR DU STOCK DÉBUT — VÉHICULE ${immatChoisie}\n\n` +
+            `Basé sur le dernier inventaire du : ${dernierInv.dateAffichage}\n` +
+            `Articles concernés : ${dernierInv.nbArticlesComptes} article(s) inventorié(s)\n\n` +
+            `• Stock Début = Stock Réel compté\n` +
+            `• Entrées = 0 et Sorties = 0\n\n` +
+            `Confirmez-vous la mise à jour pour le véhicule ${immatChoisie} ?`;
+
+        if (!confirm(msg)) return;
+
+        const btnMaj = document.getElementById("btnMajStockVehiculeSelect");
+        btnMaj.disabled = true;
+        btnMaj.textContent = "⏳ Mise à jour en cours...";
+
+        try {
+            const batch = writeBatch(db);
+            let nbModifies = 0;
+
+            if (dernierInv.lignes) {
+                dernierInv.lignes.forEach(ligne => {
+                    if (ligne.firebaseId) {
+                        const stockReel = Number(ligne.stockReel);
+                        batch.update(doc(db, "stocks", ligne.firebaseId), {
+                            debut: stockReel,
+                            entrees: 0,
+                            sorties: 0,
+                            quantite: stockReel
+                        });
+                        nbModifies++;
+                    }
+                });
+            }
+
+            batch.update(doc(db, "inventaires", dernierInv.id), {
+                cloture: true,
+                dateCloture: new Date().toLocaleString('fr-FR')
+            });
+
+            await batch.commit();
+
+            dernierInv.cloture = true;
+            filtrerAffichageInventaires();
+            await chargerStocks();
+
+            alert(`✅ Stock début mis à jour pour ${nbModifies} article(s) du véhicule ${immatChoisie} !`);
+
+        } catch (error) {
+            console.error("Erreur mise à jour stock véhicule :", error);
+            alert("❌ Erreur lors de la mise à jour : " + error.message);
+            btnMaj.disabled = false;
+        }
+    };
+
+function imprimerUnInventaire(invId) {
+    const inv = tousLesInventaires.find(i => i.id === invId);
+    if (!inv) return;
+    const tableauHtml = document.getElementById(`detail_inv_${invId}`).innerHTML;
+    const fenetre = window.open("", "", "width=900,height=650");
+    fenetre.document.write(`
+        <html>
+            <head>
+                <title>Rapport d'inventaire - ${inv.immat}</title>
+                <style>
+                    body { font-family: Arial, sans-serif; padding: 20px; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+                    th { background: #d9534f !important; color: white !important; padding: 7px; -webkit-print-color-adjust: exact; }
+                    td { border: 1px solid #ccc; padding: 6px; }
+                </style>
+            </head>
+            <body>
+                <h2>Rapport d'erreurs d'inventaire — Véhicule ${inv.immat}</h2>
+                <p><strong>Date :</strong> ${inv.dateAffichage} | <strong>Articles contrôlés :</strong> ${inv.nbArticlesComptes} | <strong>Erreurs :</strong> ${inv.nbErreurs}</p>
+                ${inv.nbErreurs > 0 ? tableauHtml : '<p>Aucune erreur de stock constatée.</p>'}
+            </body>
+        </html>
+    `);
+    fenetre.document.close();
+    fenetre.print();
+}
+
+async function supprimerUnInventaire(invId) {
+    const inv = tousLesInventaires.find(i => i.id === invId);
+    if (inv && inv.cloture) {
+        alert("🔒 Action impossible : cet inventaire est clôturé et verrouillé dans l'historique.");
+        return;
+    }
+    if (!confirm("Voulez-vous vraiment supprimer cet inventaire de l'historique ?")) return;
+    try {
+        await deleteDoc(doc(db, "inventaires", invId));
+        tousLesInventaires = tousLesInventaires.filter(i => i.id !== invId);
+        filtrerAffichageInventaires();
+    } catch (error) {
+        console.error("Erreur suppression inventaire :", error);
+        alert("Erreur lors de la suppression.");
+    }
+}
+
+
+/* ===================================
+   2. GESTION DES STOCKS MINIMUMS (CHEF DE BUREAU)
+=================================== */
+let tousLesStocksVehicules = [];
+
+async function ouvrirGestionMinimums() {
+    const modal = document.getElementById("modalGestionMin");
+    const tbody = document.getElementById("tbodyGestionMin");
+    modal.style.display = "block";
+    tbody.innerHTML = `<tr><td colspan="7" style="padding:15px; text-align:center;">⏳ Chargement des stocks de tous les véhicules...</td></tr>`;
+
+    try {
+        const snapshot = await getDocs(collection(db, "stocks"));
+        tousLesStocksVehicules = [];
+        const immatsSet = new Set();
+
+         snapshot.forEach(docSnap => {
+            const d = docSnap.data();
+            const qteActuelle = d.quantite !== undefined 
+                ? Number(d.quantite) 
+                : (Number(d.debut || 0) + Number(d.entrees || 0) - Number(d.sorties || 0));
+
+            tousLesStocksVehicules.push({
+                id: docSnap.id,
+                immat: d.immat || "Sans immat",
+                refCodial: d.refCodial || d.codial || "",
+                reference: d.reference || "",
+                denomination: d.denomination || d.intitule || "",
+                stockActuel: qteActuelle,
+                minimum: Number(d.minimum || 0)
+            });
+
+            if (d.immat) immatsSet.add(d.immat);
+        });
+
+        // Tri par véhicule puis par référence Codial
+        tousLesStocksVehicules.sort((a, b) => a.immat.localeCompare(b.immat) || a.refCodial.localeCompare(b.refCodial));
+
+        const select = document.getElementById("selectVehiculeMin");
+        select.innerHTML = `<option value="TOUS">Tous les véhicules (${tousLesStocksVehicules.length} lignes)</option>`;
+        Array.from(immatsSet).sort().forEach(immat => {
+            select.innerHTML += `<option value="${immat}">${immat}</option>`;
+        });
+
+        document.getElementById("searchMinArticle").value = "";
+        filtrerTableauMinimums();
+
+    } catch (error) {
+        console.error("Erreur chargement stocks minimums :", error);
+        tbody.innerHTML = `<tr><td colspan="7" style="padding:15px; color:red;">❌ Erreur de chargement depuis Firebase.</td></tr>`;
+    }
+}
+
+function filtrerTableauMinimums() {
+    const immatFiltre = document.getElementById("selectVehiculeMin").value;
+    const texte = document.getElementById("searchMinArticle").value.trim().toLowerCase();
+    const tbody = document.getElementById("tbodyGestionMin");
+
+    const filtres = tousLesStocksVehicules.filter(item => {
+        const matchImmat = immatFiltre === "TOUS" || item.immat === immatFiltre;
+        const matchTexte = !texte || 
+            item.refCodial.toLowerCase().includes(texte) ||
+            item.reference.toLowerCase().includes(texte) ||
+            item.denomination.toLowerCase().includes(texte);
+        return matchImmat && matchTexte;
+    });
+
+    tbody.innerHTML = "";
+    if (filtres.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="padding:15px; text-align:center;">Aucun article trouvé.</td></tr>`;
+        return;
+    }
+
+    filtres.forEach(item => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td style="padding:6px; font-weight:bold;">${item.immat}</td>
+            <td style="padding:6px;">${item.refCodial}</td>
+            <td style="padding:6px;">${item.reference}</td>
+            <td style="padding:6px;">${item.denomination}</td>
+            <td style="padding:6px; text-align:center;">${item.stockActuel}</td>
+            <td style="padding:6px; text-align:center;">
+                <input type="number" min="0" id="input_min_${item.id}" value="${item.minimum}" style="width:80px; padding:5px; text-align:center; font-weight:bold; font-size:15px;">
+            </td>
+            <td style="padding:6px; text-align:center;">
+                <button id="btn_save_min_${item.id}" onclick="sauvegarderStockMinimum('${item.id}')" style="background:#28a745; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">
+                    💾 Enregistrer
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+async function sauvegarderStockMinimum(docId) {
+    const input = document.getElementById(`input_min_${docId}`);
+    const btn = document.getElementById(`btn_save_min_${docId}`);
+    const nouveauMin = Number(input.value);
+
+    if (isNaN(nouveauMin) || nouveauMin < 0) {
+        alert("Veuillez saisir un stock minimum valide (0 ou plus).");
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = "⏳...";
+
+    try {
+        await updateDoc(doc(db, "stocks", docId), {
+            minimum: nouveauMin
+        });
+
+        const article = tousLesStocksVehicules.find(i => i.id === docId);
+        if (article) article.minimum = nouveauMin;
+
+        btn.style.background = "#17a2b8";
+        btn.textContent = "✅ OK";
+        setTimeout(() => {
+            btn.style.background = "#28a745";
+            btn.textContent = "💾 Enregistrer";
+            btn.disabled = false;
+        }, 1500);
+
+    } catch (error) {
+        console.error("Erreur mise à jour minimum :", error);
+        alert("⚠️ Erreur lors de l'enregistrement du stock minimum.");
+        btn.disabled = false;
+        btn.textContent = "💾 Enregistrer";
+    }
+}
+
+// Exposition des fonctions aux boutons HTML
+window.ouvrirHistoriqueInventaires = ouvrirHistoriqueInventaires;
+window.filtrerAffichageInventaires = filtrerAffichageInventaires;
+window.imprimerUnInventaire = imprimerUnInventaire;
+window.supprimerUnInventaire = supprimerUnInventaire;
+window.ouvrirGestionMinimums = ouvrirGestionMinimums;
+window.filtrerTableauMinimums = filtrerTableauMinimums;
+window.sauvegarderStockMinimum = sauvegarderStockMinimum;
+
+</script>
 </body>
 </html>

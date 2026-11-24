@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestion des Stocks - Chef de Bureau V 1.2</title>
+    <title>Gestion des Stocks - Chef de Bureau V 1.4</title>
     <style>
         * {
             margin: 0;
@@ -137,6 +137,15 @@
             color: #666;
             margin-bottom: 15px;
         }
+        .badge-entite {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+            background: #004A99;
+        }
         footer {
             background: #003366;
             color: #ffffff;
@@ -145,13 +154,13 @@
             font-size: 13px;
             border-top: 2px solid #004A99;
         }
-
     </style>
+<script src="https://cloudflare.com"></script>
 </head>
 <body>
 
 <header>
-    GESTION DES STOCKS - CHEF DE BUREAU v1.2
+    GESTION DES STOCKS - CHEF DE BUREAU v1.4
 </header>
 
 <div class="container">
@@ -164,8 +173,9 @@
         <button onclick="showSection('consultation')">Consultation Véhicules</button>
         <button onclick="showSection('recherche')">Consultation / Recherche Stock</button>
         <button class="btn" onclick="ouvrirHistoriqueInventaires()" style="background:#6f42c1;">📂 Inventaires enregistrés</button>
+        <button class="btn" onclick="ouvrirStocksGlobaux()" style="background:#008080;">🏢 Stocks Globaux & Archives</button>
         <button class="btn" onclick="ouvrirGestionMinimums()" style="background:#e67e22;">⚙️ Stocks minimums véhicules</button>
-        <button onclick="window.location.href='index.html'" class="quit">Retour Accueil</button>
+        <button onclick="quitterApplication()" class="quit">🚪 Quitter</button>
     </div>
 
     <div class="content">
@@ -195,7 +205,6 @@
             <p class="info-note">Sélectionnez d'abord le <b>Véhicule destinataire</b> ci-dessus, puis choisissez votre fichier CSV.</p>
             <input type="file" id="fichierCSV" accept=".csv">
             <button class="btn" style="background:#004A99;" onclick="importerCSV()">Importer le fichier du véhicule</button>
-
         </div>
 
         <!-- Création Véhicule -->
@@ -261,7 +270,6 @@
                 </tbody>
             </table>
         </div>
-
         <!-- Catalogue Général -->
         <div id="catalogue" class="section">
             <h2>Catalogue Général des Articles (Référence)</h2>
@@ -337,35 +345,52 @@
 </div>
 
 <footer>
-    Créé par Robert AURAY &copy; 2026 pour FCM/FES
+    Créé par Robert AURAY &copy; 2026 pour AERIS / FCM / FES
 </footer>
 
-
-<!-- MODALE 1 : HISTORIQUE DES INVENTAIRES (CHEF DE BUREAU) -->
+<!-- MODALE 1 : HISTORIQUE DES INVENTAIRES & CONSOLIDATION (CHEF DE BUREAU) -->
 <div id="modalHistoriqueInv" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:1000; overflow-y:auto;">
-    <div style="background:white; margin:20px auto; padding:20px; width:94%; max-width:1000px; border-radius:8px; box-shadow:0 4px 10px rgba(0,0,0,0.3);">
+    <div style="background:white; margin:20px auto; padding:20px; width:94%; max-width:1050px; border-radius:8px; box-shadow:0 4px 10px rgba(0,0,0,0.3);">
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #ddd; padding-bottom:10px;">
-            <h2 style="margin:0;">📂 Inventaires des Véhicules & Listes des Erreurs</h2>
+            <h2 style="margin:0;">📂 Inventaires des Véhicules & Consolidation Société</h2>
             <button onclick="document.getElementById('modalHistoriqueInv').style.display='none'" style="background:#dc3545; color:white; border:none; padding:6px 14px; border-radius:4px; cursor:pointer;">✖ Fermer</button>
         </div>
 
-        <!-- FILTRE PAR VÉHICULE -->
-        <div style="margin-top:15px; background:#f8f9fa; padding:12px; border-radius:6px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; border:1px solid #ddd;">
-            <div style="display:flex; align-items:center; gap:10px;">
-                <label for="filtreImmatInv" style="margin:0;"><strong>Sélectionner un véhicule :</strong></label>
-                <select id="filtreImmatInv" onchange="filtrerAffichageInventaires()" style="width:auto; margin:0; padding:6px; font-size:15px; border-radius:4px;">
+        <!-- FILTRE PAR VÉHICULE & CHOIX DE L'ENTITÉ POUR CONSOLIDATION -->
+        <div style="margin-top:15px; background:#f8f9fa; padding:15px; border-radius:6px; border:1px solid #ddd;">
+            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                <label for="filtreImmatInv" style="margin:0;"><strong>Sélectionner un véhicule / technicien :</strong></label>
+                <select id="filtreImmatInv" onchange="filtrerAffichageInventaires()" style="width:auto; margin:0; padding:7px; font-size:15px; border-radius:4px;">
                     <option value="TOUS">Tous les véhicules</option>
                 </select>
             </div>
 
-            <div id="zoneActionMajVehicule" style="display:none;">
-                <button id="btnMajStockVehiculeSelect" onclick="mettreAJourStockVehiculeSelectionne()" style="background:#28a745; color:white; border:none; padding:8px 14px; border-radius:4px; font-weight:bold; cursor:pointer;">
-                    🔄 Mettre à jour le stock début de ce véhicule
-                </button>
+            <div id="zoneActionMajVehicule" style="display:none; margin-top:15px; padding-top:15px; border-top:1px dashed #ccc;">
+                <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end;">
+                    <div>
+                        <label for="selectEntiteConsolidation" style="font-size:13px; display:block; margin-bottom:4px;">🏢 Affecter ce technicien à l'entité :</label>
+                        <select id="selectEntiteConsolidation" style="width:auto; margin:0; padding:8px; font-size:14px; font-weight:bold; border:2px solid #004A99;">
+                            <option value="AERIS">AERIS</option>
+                            <option value="FCM">FCM (Froid Climatisation Meglorienne)</option>
+                            <option value="FES">FES (Froid Elec Service)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="inputAnneeConsolidation" style="font-size:13px; display:block; margin-bottom:4px;">📅 Année du stock global :</label>
+                        <input type="number" id="inputAnneeConsolidation" min="2024" max="2050" style="width:100px; margin:0; padding:8px; font-size:14px; font-weight:bold; text-align:center;">
+                    </div>
+                    <div style="flex:1; min-width:260px;">
+                        <button id="btnMajStockVehiculeSelect" onclick="mettreAJourStockVehiculeSelectionne()" style="background:#28a745; color:white; border:none; padding:10px 16px; border-radius:4px; font-weight:bold; cursor:pointer; width:100%; font-size:14px;">
+                            🔄 Valider l'inventaire & Ajouter au Stock Global
+                        </button>
+                    </div>
+                </div>
+                <p style="font-size:12px; color:#555; margin-top:8px;">
+                    ℹ️ La validation met à jour le stock début du véhicule et additionne automatiquement les quantités comptées dans le <strong>Stock global</strong> de l'entité choisie.
+                </p>
             </div>
         </div>
 
-        <!-- AJOUTEZ CETTE LIGNE QUI MANQUAIT -->
         <div id="contenuHistoriqueInv" style="margin-top:15px;">Chargement...</div>
     </div>
 </div>
@@ -377,7 +402,6 @@
             <button onclick="document.getElementById('modalGestionMin').style.display='none'" style="background:#dc3545; color:white; border:none; padding:6px 14px; border-radius:4px; cursor:pointer;">✖ Fermer</button>
         </div>
 
-        <!-- BARRE DE FILTRE -->
         <div style="margin-top:15px; background:#f8f9fa; padding:12px; border-radius:6px; display:flex; flex-wrap:wrap; gap:15px; align-items:center;">
             <div>
                 <label for="selectVehiculeMin"><strong>Véhicule :</strong></label>
@@ -390,7 +414,6 @@
             </div>
         </div>
 
-        <!-- TABLEAU DES STOCKS MINIMUMS -->
         <div style="width:100%; overflow-x:auto; margin-top:15px;">
             <table border="1" style="width:100%; min-width:0 !important; border-collapse:collapse; text-align:left; font-size:14px;">
                 <thead style="background:#005A9C; color:white;">
@@ -410,8 +433,75 @@
     </div>
 </div>
 
+<!-- MODALE 3 : STOCKS GLOBAUX PAR ENTITÉ (AERIS / FCM / FES) & ARCHIVES -->
+<div id="modalStocksGlobaux" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.65); z-index:1002; overflow-y:auto;">
+    <div style="background:white; margin:20px auto; padding:22px; width:95%; max-width:1100px; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.35);">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #008080; padding-bottom:10px;">
+            <h2 style="margin:0; color:#005a5a;">🏢 Stocks Globaux Consolidés & Archives Annuelles</h2>
+            <button onclick="document.getElementById('modalStocksGlobaux').style.display='none'" style="background:#dc3545; color:white; border:none; padding:6px 14px; border-radius:4px; cursor:pointer;">✖ Fermer</button>
+        </div>
 
+        <div style="margin-top:15px; background:#f0f8f8; padding:15px; border-radius:6px; border:1px solid #b2d8d8; display:flex; flex-wrap:wrap; gap:15px; align-items:flex-end;">
+            <div>
+                <label for="selectEntiteGlobale" style="display:block; margin-bottom:4px;"><strong>Entité :</strong></label>
+                <select id="selectEntiteGlobale" onchange="chargerVueStockGlobal()" style="width:auto; margin:0; padding:8px; font-size:15px; font-weight:bold;">
+                    <option value="AERIS">AERIS</option>
+                    <option value="FCM">FCM (Froid Climatisation Meglorienne)</option>
+                    <option value="FES">FES (Froid Elec Service)</option>
+                </select>
+            </div>
+            <div>
+                <label for="inputAnneeGlobale" style="display:block; margin-bottom:4px;"><strong>Année :</strong></label>
+                <input type="number" id="inputAnneeGlobale" onchange="chargerVueStockGlobal()" min="2024" max="2050" style="width:105px; margin:0; padding:8px; font-size:15px; font-weight:bold; text-align:center;">
+            </div>
+            <div style="flex:1; min-width:200px;">
+                <input type="text" id="searchArticleGlobal" oninput="filtrerTableauStockGlobal()" placeholder="Filtrer un article dans ce stock global..." style="margin:0; padding:8px; font-size:14px;">
+            </div>
+        </div>
 
+        <div id="bandeauStatutArchive" style="margin-top:15px; padding:15px; border-radius:6px; border:1px solid #ccc; background:#fff; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <div id="infoArchiveTexte">Chargement...</div>
+            <div id="boutonsActionsArchive" style="display:flex; gap:8px; flex-wrap:wrap;"></div>
+        </div>
+
+        <div id="listeVehiculesIntegres" style="margin-top:10px; font-size:13px; color:#444; background:#f9f9f9; padding:8px 12px; border-radius:4px; border:1px solid #eee;">
+        </div>
+
+        <div style="width:100%; overflow-x:auto; margin-top:15px; max-height:400px; overflow-y:auto;">
+            <table border="1" style="width:100%; min-width:0 !important; border-collapse:collapse; text-align:left; font-size:14px;">
+                <thead style="background:#005a5a; color:white; position:sticky; top:0;">
+                    <tr>
+                        <th style="padding:8px;">Réf. Codial</th>
+                        <th style="padding:8px;">Réf. Fabricant / Fourn.</th>
+                        <th style="padding:8px;">Fournisseur</th>
+                        <th style="padding:8px;">Dénomination</th>
+                        <th style="padding:8px; text-align:center; width:130px;">Quantité Totale</th>
+                    </tr>
+                </thead>
+                <tbody id="tbodyStockGlobal"></tbody>
+            </table>
+        </div>
+
+        <div style="margin-top:25px; border-top:2px solid #ddd; padding-top:15px;">
+            <h3 style="color:#003366; margin-bottom:10px;">📚 Répertoire de tous les Stocks Globaux enregistrés (AERIS / FCM / FES)</h3>
+            <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse; font-size:13px; margin-top:5px;">
+                    <thead style="background:#003366; color:white;">
+                        <tr>
+                            <th style="padding:8px;">Nom du Stock Global</th>
+                            <th style="padding:8px;">Entité</th>
+                            <th style="padding:8px;">Année</th>
+                            <th style="padding:8px;">Statut</th>
+                            <th style="padding:8px;">Date validation</th>
+                            <th style="padding:8px; text-align:center;">Réédition / Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyRepertoireArchives"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
 <script type="module">
     const h = ["https:/", "www" + ".gstatic.com", "firebasejs", "10.12.2"].join("/");
     const { initializeApp } = await import(h + "/firebase-app.js");
@@ -430,8 +520,15 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
+    const NOMS_ENTITES = {
+        "AERIS": "AERIS",
+        "FCM": "FCM (Froid Climatisation Meglorienne)",
+        "FES": "FES (Froid Elec Service)"
+    };
+
     let cacheStocks = [];
     let cacheCatalogue = [];
+    let cacheVehiculesMap = {};
 
     window.showSection = function(id) {
         document.querySelectorAll(".section").forEach(section => section.classList.remove("active"));
@@ -486,6 +583,7 @@
         try {
             const snapshot = await getDocs(collection(db, "vehicules"));
             tbody.innerHTML = "";
+            cacheVehiculesMap = {};
             
             selects.forEach(sel => {
                 sel.innerHTML = '<option value="">-- Choisissez un véhicule --</option>';
@@ -498,6 +596,7 @@
 
             snapshot.forEach(docSnap => {
                 const data = docSnap.data();
+                cacheVehiculesMap[data.immat] = `${data.nom} ${data.prenom}`;
                 
                 const tr = document.createElement("tr");
                 tr.appendChild(creerCellule(data.immat));
@@ -542,57 +641,54 @@
         }
     };
 
-window.modifierVehicule = async function() {
-  const id = document.getElementById("selectVehiculeImmat").value;
-  const nouvelleImmat = document.getElementById("nouvelleImmat").value.trim().toUpperCase();
+    window.modifierVehicule = async function() {
+        const id = document.getElementById("selectVehiculeImmat").value;
+        const nouvelleImmat = document.getElementById("nouvelleImmat").value.trim().toUpperCase();
 
-  if (!id || !nouvelleImmat) {
-    alert("Veuillez sélectionner un véhicule et saisir la nouvelle immatriculation.");
-    return;
-  }
+        if (!id || !nouvelleImmat) {
+            alert("Veuillez sélectionner un véhicule et saisir la nouvelle immatriculation.");
+            return;
+        }
 
-  try {
-    // 1. Récupérer le véhicule actuel pour connaître son ancienne immatriculation
-    const vehiculeRef = doc(db, "vehicules", id);
-    const vehiculeSnap = await getDoc(vehiculeRef);
+        try {
+            const vehiculeRef = doc(db, "vehicules", id);
+            const vehiculeSnap = await getDoc(vehiculeRef);
 
-    if (!vehiculeSnap.exists()) {
-      alert("Véhicule introuvable dans la base de données.");
-      return;
-    }
+            if (!vehiculeSnap.exists()) {
+                alert("Véhicule introuvable dans la base de données.");
+                return;
+            }
 
-    const ancienneImmat = vehiculeSnap.data().immat;
+            const ancienneImmat = vehiculeSnap.data().immat;
 
-    if (ancienneImmat === nouvelleImmat) {
-      alert("La nouvelle immatriculation est identique à l'ancienne.");
-      return;
-    }
+            if (ancienneImmat === nouvelleImmat) {
+                alert("La nouvelle immatriculation est identique à l'ancienne.");
+                return;
+            }
 
-    // 2. Rechercher tous les articles liés à l'ancienne immatriculation dans "stocks"
-    const stocksRef = collection(db, "stocks");
-    const q = query(stocksRef, where("immat", "==", ancienneImmat));
-    const querySnapshot = await getDocs(q);
+            const stocksRef = collection(db, "stocks");
+            const q = query(stocksRef, where("immat", "==", ancienneImmat));
+            const querySnapshot = await getDocs(q);
 
-    // 3. Préparer la mise à jour groupée
-    const batch = writeBatch(db);
-    batch.update(vehiculeRef, { immat: nouvelleImmat });
+            const batch = writeBatch(db);
+            batch.update(vehiculeRef, { immat: nouvelleImmat });
 
-    querySnapshot.forEach((docSnap) => {
-      batch.update(docSnap.ref, { immat: nouvelleImmat });
-    });
+            querySnapshot.forEach((docSnap) => {
+                batch.update(docSnap.ref, { immat: nouvelleImmat });
+            });
 
-    // 4. Exécuter toutes les modifications en une fois
-    await batch.commit();
+            await batch.commit();
 
-    alert(`Immatriculation modifiée et ${querySnapshot.size} article(s) réattribué(s) avec succès !`);
-    document.getElementById("nouvelleImmat").value = "";
-    await chargerVehicules();
+            alert(`Immatriculation modifiée et ${querySnapshot.size} article(s) réattribué(s) avec succès !`);
+            document.getElementById("nouvelleImmat").value = "";
+            await chargerVehicules();
 
-  } catch (error) {
-    console.error("Erreur lors de la modification :", error);
-    alert("Erreur : " + error.message);
-  }
-};
+        } catch (error) {
+            console.error("Erreur lors de la modification :", error);
+            alert("Erreur : " + error.message);
+        }
+    };
+
     window.modifierTechnicien = async function() {
         const id = document.getElementById("selectVehiculeTech").value;
         const nouveauNom = document.getElementById("nouveauNom").value.trim().toUpperCase();
@@ -617,6 +713,7 @@ window.modifierVehicule = async function() {
             alert("Erreur : " + error.message);
         }
     };
+
     window.enregistrerStock = async function() {
         const immat = document.getElementById("selectVehiculeStock").value;
         const reference = document.getElementById("stockRef").value.trim().toUpperCase();
@@ -728,277 +825,251 @@ window.modifierVehicule = async function() {
             alert("Erreur : " + error.message);
         }
     };
-window.importerCSV = function() {
-    const immat = document.getElementById("selectVehiculeStock").value;
-    if (!immat) {
-        alert("Veuillez d'abord sélectionner un véhicule destinataire dans la liste au-dessus !");
-        return;
-    }
 
-    const input = document.getElementById("fichierCSV");
-    const fichier = input.files.item(0);
-
-    if (!fichier) {
-        alert("Veuillez sélectionner votre fichier CSV.");
-        return;
-    }
-
-    const lecteur = new FileReader();
-    lecteur.onload = async function(e) {
-        const lignes = e.target.result.split(/\r?\n/);
-        let compteur = 0;
-
-        for (let i = 1; i < lignes.length; i++) {
-            const ligne = lignes[i].trim();
-            if (!ligne) continue;
-
-            const cols = ligne.includes(";") ? ligne.split(";") : ligne.split(",");
-            if (cols.length < 11) continue;
-
-            const refCodial = (cols.at(0) || "").trim();
-            const fournisseur = (cols.at(1) || "").trim();
-            const machine = (cols.at(2) || "").trim();
-            const marque = (cols.at(3) || "").trim();
-            const materiel = (cols.at(4) || "").trim();
-            const refFabricant = (cols.at(5) || "").trim();
-            const reference = (refFabricant || refCodial).toUpperCase();
-            const intitule = (cols.at(6) || "").trim();
-            const debut = parseInt((cols.at(7) || "0").trim(), 10) || 0;
-            const entrees = parseInt((cols.at(8) || "0").trim(), 10) || 0;
-            const sorties = parseInt((cols.at(9) || "0").trim(), 10) || 0;
-            const quantite = parseInt((cols.at(10) || "").trim(), 10);
-            const minimum = parseInt((cols.at(11) || "0").trim(), 10) || 0;
-
-            if (!reference || !intitule || isNaN(quantite)) continue;
-
-            const donneesArticle = {
-                immat,
-                reference,
-                refCodial,
-                fournisseur,
-                machine,
-                marque,
-                materiel,
-                intitule,
-                debut,
-                entrees,
-                sorties,
-                quantite,
-                minimum
-            };
-
-            const q = query(
-                collection(db, "stocks"),
-                where("immat", "==", immat),
-                where("reference", "==", reference)
-            );
-            const snap = await getDocs(q);
-
-            if (!snap.empty) {
-                await updateDoc(doc(db, "stocks", snap.docs.at(0).id), donneesArticle);
-            } else {
-                await addDoc(collection(db, "stocks"), donneesArticle);
-            }
-            compteur++;
+    window.importerCSV = function() {
+        const immat = document.getElementById("selectVehiculeStock").value;
+        if (!immat) {
+            alert("Veuillez d'abord sélectionner un véhicule destinataire dans la liste au-dessus !");
+            return;
         }
 
-        alert(compteur + " articles importés dans le véhicule " + immat + " !");
-        input.value = "";
-        await chargerStocks();
-    };
-    lecteur.readAsText(fichier, "UTF-8");
-};
-window.ajouterArticleCatalogue = async function() {
-    const refFabricant = document.getElementById("catRef").value.trim().toUpperCase();
-    const refCodial = document.getElementById("catRefCodial").value.trim().toUpperCase();
-    const intitule = document.getElementById("catIntitule").value.trim();
-    const marque = document.getElementById("catMarque").value.trim().toUpperCase();
-    const fournisseur = document.getElementById("catFournisseur").value.trim();
+        const input = document.getElementById("fichierCSV");
+        const fichier = input.files.item(0);
 
-    const reference = refFabricant || refCodial;
-
-    if (!reference || !intitule) {
-        alert("Veuillez saisir au minimum une référence et une dénomination.");
-        return;
-    }
-
-    const docId = reference.replace(/\//g, "-");
-
-    try {
-        await setDoc(doc(db, "catalogue", docId), {
-            reference,
-            refCodial,
-            intitule,
-            marque,
-            fournisseur
-        }, { merge: true });
-
-        alert("Article " + reference + " enregistré dans le catalogue !");
-        document.getElementById("catRef").value = "";
-        document.getElementById("catRefCodial").value = "";
-        document.getElementById("catIntitule").value = "";
-        document.getElementById("catMarque").value = "";
-        document.getElementById("catFournisseur").value = "";
-        await chargerCatalogue();
-    } catch (error) {
-        console.error("Erreur ajout catalogue :", error);
-        alert("Erreur : " + error.message);
-    }
-};
-
-window.importerCatalogueCSV = function() {
-    const input = document.getElementById("fichierCatalogueCSV");
-    const fichier = input.files.item(0);
-
-    if (!fichier) {
-        alert("Veuillez sélectionner votre fichier CSV du catalogue général.");
-        return;
-    }
-
-    const lecteur = new FileReader();
-    lecteur.onload = async function(e) {
-        const lignes = e.target.result.split(/\r?\n/);
-        let compteur = 0;
-
-        for (let i = 1; i < lignes.length; i++) {
-            const ligne = lignes[i].trim();
-            if (!ligne) continue;
-
-            const cols = ligne.includes(";") ? ligne.split(";") : ligne.split(",");
-            if (cols.length < 7) continue;
-
-            const refCodial = (cols.at(0) || "").trim();
-            const fournisseur = (cols.at(1) || "").trim();
-            const machine = (cols.at(2) || "").trim();
-            const marque = (cols.at(3) || "").trim();
-            const materiel = (cols.at(4) || "").trim();
-            const refFabricant = (cols.at(5) || "").trim();
-            const reference = (refFabricant || refCodial).toUpperCase();
-            const intitule = (cols.at(6) || "").trim();
-
-            if (!reference || !intitule) continue;
-
-            const donneesCatalogue = {
-                reference,
-                refCodial,
-                fournisseur,
-                machine,
-                marque,
-                materiel,
-                intitule
-            };
-
-            const q = query(
-                collection(db, "catalogue"),
-                where("reference", "==", reference)
-            );
-            const snap = await getDocs(q);
-
-            if (!snap.empty) {
-                await updateDoc(doc(db, "catalogue", snap.docs.at(0).id), donneesCatalogue);
-            } else {
-                await addDoc(collection(db, "catalogue"), donneesCatalogue);
-            }
-            compteur++;
+        if (!fichier) {
+            alert("Veuillez sélectionner votre fichier CSV.");
+            return;
         }
 
-        alert(compteur + " articles enregistrés dans le Catalogue Général !");
-        input.value = "";
-        await chargerCatalogue();
+        const lecteur = new FileReader();
+        lecteur.onload = async function(e) {
+            const lignes = e.target.result.split(/\r?\n/);
+            let compteur = 0;
+
+            for (let i = 1; i < lignes.length; i++) {
+                const ligne = lignes[i].trim();
+                if (!ligne) continue;
+
+                const cols = ligne.includes(";") ? ligne.split(";") : ligne.split(",");
+                if (cols.length < 11) continue;
+
+                const refCodial = (cols.at(0) || "").trim();
+                const fournisseur = (cols.at(1) || "").trim();
+                const machine = (cols.at(2) || "").trim();
+                const marque = (cols.at(3) || "").trim();
+                const materiel = (cols.at(4) || "").trim();
+                const refFabricant = (cols.at(5) || "").trim();
+                const reference = (refFabricant || refCodial).toUpperCase();
+                const intitule = (cols.at(6) || "").trim();
+                const debut = parseInt((cols.at(7) || "0").trim(), 10) || 0;
+                const entrees = parseInt((cols.at(8) || "0").trim(), 10) || 0;
+                const sorties = parseInt((cols.at(9) || "0").trim(), 10) || 0;
+                const quantite = parseInt((cols.at(10) || "").trim(), 10);
+                const minimum = parseInt((cols.at(11) || "0").trim(), 10) || 0;
+
+                if (!reference || !intitule || isNaN(quantite)) continue;
+
+                const donneesArticle = {
+                    immat, reference, refCodial, fournisseur, machine, marque, materiel,
+                    intitule, debut, entrees, sorties, quantite, minimum
+                };
+
+                const q = query(
+                    collection(db, "stocks"),
+                    where("immat", "==", immat),
+                    where("reference", "==", reference)
+                );
+                const snap = await getDocs(q);
+
+                if (!snap.empty) {
+                    await updateDoc(doc(db, "stocks", snap.docs.at(0).id), donneesArticle);
+                } else {
+                    await addDoc(collection(db, "stocks"), donneesArticle);
+                }
+                compteur++;
+            }
+
+            alert(compteur + " articles importés dans le véhicule " + immat + " !");
+            input.value = "";
+            await chargerStocks();
+        };
+        lecteur.readAsText(fichier, "UTF-8");
     };
-    lecteur.readAsText(fichier, "UTF-8");
-};
+    window.ajouterArticleCatalogue = async function() {
+        const refFabricant = document.getElementById("catRef").value.trim().toUpperCase();
+        const refCodial = document.getElementById("catRefCodial").value.trim().toUpperCase();
+        const intitule = document.getElementById("catIntitule").value.trim();
+        const marque = document.getElementById("catMarque").value.trim().toUpperCase();
+        const fournisseur = document.getElementById("catFournisseur").value.trim();
 
-window.chargerCatalogue = async function() {
-    const tbody = document.getElementById("listeCatalogue");
-    tbody.innerHTML = "<tr><td colspan='5'>Chargement du catalogue...</td></tr>";
+        const reference = refFabricant || refCodial;
 
-    try {
-        const snapshot = await getDocs(collection(db, "catalogue"));
-        cacheCatalogue = [];
-        snapshot.forEach(docSnap => {
-            cacheCatalogue.push({ id: docSnap.id, ...docSnap.data() });
+        if (!reference || !intitule) {
+            alert("Veuillez saisir au minimum une référence et une dénomination.");
+            return;
+        }
+
+        const docId = reference.replace(/\//g, "-");
+
+        try {
+            await setDoc(doc(db, "catalogue", docId), {
+                reference, refCodial, intitule, marque, fournisseur
+            }, { merge: true });
+
+            alert("Article " + reference + " enregistré dans le catalogue !");
+            document.getElementById("catRef").value = "";
+            document.getElementById("catRefCodial").value = "";
+            document.getElementById("catIntitule").value = "";
+            document.getElementById("catMarque").value = "";
+            document.getElementById("catFournisseur").value = "";
+            await chargerCatalogue();
+        } catch (error) {
+            console.error("Erreur ajout catalogue :", error);
+            alert("Erreur : " + error.message);
+        }
+    };
+
+    window.importerCatalogueCSV = function() {
+        const input = document.getElementById("fichierCatalogueCSV");
+        const fichier = input.files.item(0);
+
+        if (!fichier) {
+            alert("Veuillez sélectionner votre fichier CSV du catalogue général.");
+            return;
+        }
+
+        const lecteur = new FileReader();
+        lecteur.onload = async function(e) {
+            const lignes = e.target.result.split(/\r?\n/);
+            let compteur = 0;
+
+            for (let i = 1; i < lignes.length; i++) {
+                const ligne = lignes[i].trim();
+                if (!ligne) continue;
+
+                const cols = ligne.includes(";") ? ligne.split(";") : ligne.split(",");
+                if (cols.length < 7) continue;
+
+                const refCodial = (cols.at(0) || "").trim();
+                const fournisseur = (cols.at(1) || "").trim();
+                const machine = (cols.at(2) || "").trim();
+                const marque = (cols.at(3) || "").trim();
+                const materiel = (cols.at(4) || "").trim();
+                const refFabricant = (cols.at(5) || "").trim();
+                const reference = (refFabricant || refCodial).toUpperCase();
+                const intitule = (cols.at(6) || "").trim();
+
+                if (!reference || !intitule) continue;
+
+                const donneesCatalogue = {
+                    reference, refCodial, fournisseur, machine, marque, materiel, intitule
+                };
+
+                const q = query(collection(db, "catalogue"), where("reference", "==", reference));
+                const snap = await getDocs(q);
+
+                if (!snap.empty) {
+                    await updateDoc(doc(db, "catalogue", snap.docs.at(0).id), donneesCatalogue);
+                } else {
+                    await addDoc(collection(db, "catalogue"), donneesCatalogue);
+                }
+                compteur++;
+            }
+
+            alert(compteur + " articles enregistrés dans le Catalogue Général !");
+            input.value = "";
+            await chargerCatalogue();
+        };
+        lecteur.readAsText(fichier, "UTF-8");
+    };
+
+    window.chargerCatalogue = async function() {
+        const tbody = document.getElementById("listeCatalogue");
+        tbody.innerHTML = "<tr><td colspan='5'>Chargement du catalogue...</td></tr>";
+
+        try {
+            const snapshot = await getDocs(collection(db, "catalogue"));
+            cacheCatalogue = [];
+            snapshot.forEach(docSnap => {
+                cacheCatalogue.push({ id: docSnap.id, ...docSnap.data() });
+            });
+            filtrerCatalogue();
+        } catch (error) {
+            console.error("Erreur catalogue :", error);
+            tbody.innerHTML = "<tr><td colspan='5' style='color:red;'>Erreur lors du chargement.</td></tr>";
+        }
+    };
+
+    window.filtrerCatalogue = function() {
+        const texte = document.getElementById("rechercheCatalogue").value.trim().toLowerCase();
+        const tbody = document.getElementById("listeCatalogue");
+        tbody.innerHTML = "";
+
+        const filtres = cacheCatalogue.filter(art => {
+            return (art.reference || "").toLowerCase().includes(texte) ||
+                   (art.refCodial || "").toLowerCase().includes(texte) ||
+                   (art.intitule || "").toLowerCase().includes(texte) ||
+                   (art.marque || "").toLowerCase().includes(texte);
         });
-        filtrerCatalogue();
-    } catch (error) {
-        console.error("Erreur catalogue :", error);
-        tbody.innerHTML = "<tr><td colspan='5' style='color:red;'>Erreur lors du chargement.</td></tr>";
-    }
-};
 
-window.filtrerCatalogue = function() {
-    const texte = document.getElementById("rechercheCatalogue").value.trim().toLowerCase();
-    const tbody = document.getElementById("listeCatalogue");
-    tbody.innerHTML = "";
+        if (filtres.length === 0) {
+            tbody.innerHTML = "<tr><td colspan='5'>Aucun article trouvé dans le catalogue.</td></tr>";
+            return;
+        }
 
-    const filtres = cacheCatalogue.filter(art => {
-        return (art.reference || "").toLowerCase().includes(texte) ||
-               (art.refCodial || "").toLowerCase().includes(texte) ||
-               (art.intitule || "").toLowerCase().includes(texte) ||
-               (art.marque || "").toLowerCase().includes(texte);
-    });
-
-    if (filtres.length === 0) {
-        tbody.innerHTML = "<tr><td colspan='5'>Aucun article trouvé dans le catalogue.</td></tr>";
-        return;
-    }
-
-    filtres.forEach(art => {
-        const tr = document.createElement("tr");
-        tr.appendChild(creerCellule(art.reference));
-        tr.appendChild(creerCellule(art.refCodial));
-        tr.appendChild(creerCellule(art.intitule));
-        tr.appendChild(creerCellule(art.marque));
-        tr.appendChild(creerCellule(art.fournisseur));
-        tbody.appendChild(tr);
-    });
-};
+        filtres.forEach(art => {
+            const tr = document.createElement("tr");
+            tr.appendChild(creerCellule(art.reference));
+            tr.appendChild(creerCellule(art.refCodial));
+            tr.appendChild(creerCellule(art.intitule));
+            tr.appendChild(creerCellule(art.marque));
+            tr.appendChild(creerCellule(art.fournisseur));
+            tbody.appendChild(tr);
+        });
+    };
 
     chargerVehicules();
     chargerStocks();
 
-/* ===================================
-   1. CONSULTATION DES INVENTAIRES (CHEF DE BUREAU)
-=================================== */
-let tousLesInventaires = [];
+    /* =========================================================================
+       1. CONSULTATION DES INVENTAIRES & CONSOLIDATION VERS AERIS / FCM / FES
+    ========================================================================= */
+    let tousLesInventaires = [];
 
-async function ouvrirHistoriqueInventaires() {
-    const modal = document.getElementById("modalHistoriqueInv");
-    const conteneur = document.getElementById("contenuHistoriqueInv");
-    modal.style.display = "block";
-    conteneur.innerHTML = "<p>⏳ Chargement des inventaires depuis Firebase...</p>";
+    async function ouvrirHistoriqueInventaires() {
+        const modal = document.getElementById("modalHistoriqueInv");
+        const conteneur = document.getElementById("contenuHistoriqueInv");
+        modal.style.display = "block";
+        conteneur.innerHTML = "<p>⏳ Chargement des inventaires depuis Firebase...</p>";
+        document.getElementById("inputAnneeConsolidation").value = new Date().getFullYear();
 
-    try {
-        const snapshot = await getDocs(collection(db, "inventaires"));
-        tousLesInventaires = [];
-        const immatsSet = new Set();
+        try {
+            const snapshot = await getDocs(collection(db, "inventaires"));
+            tousLesInventaires = [];
+            const immatsSet = new Set();
 
-        snapshot.forEach(docSnap => {
-            const data = docSnap.data();
-            tousLesInventaires.push({ id: docSnap.id, ...data });
-            if (data.immat) immatsSet.add(data.immat);
-        });
+            snapshot.forEach(docSnap => {
+                const data = docSnap.data();
+                tousLesInventaires.push({ id: docSnap.id, ...data });
+                if (data.immat) immatsSet.add(data.immat);
+            });
 
-        // Tri du plus récent au plus ancien
-        tousLesInventaires.sort((a, b) => new Date(b.date) - new Date(a.date));
+            tousLesInventaires.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-        // Remplissage du menu déroulant des véhicules
-        const select = document.getElementById("filtreImmatInv");
-        select.innerHTML = `<option value="TOUS">Tous les véhicules (${tousLesInventaires.length})</option>`;
-        Array.from(immatsSet).sort().forEach(immat => {
-            select.innerHTML += `<option value="${immat}">${immat}</option>`;
-        });
+            const select = document.getElementById("filtreImmatInv");
+            select.innerHTML = `<option value="TOUS">Tous les véhicules (${tousLesInventaires.length})</option>`;
+            Array.from(immatsSet).sort().forEach(immat => {
+                const techNom = cacheVehiculesMap[immat] ? ` — ${cacheVehiculesMap[immat]}` : "";
+                select.innerHTML += `<option value="${immat}">${immat}${techNom}</option>`;
+            });
 
-        filtrerAffichageInventaires();
+            filtrerAffichageInventaires();
 
-    } catch (error) {
-        console.error("Erreur lecture inventaires :", error);
-        conteneur.innerHTML = "<p style='color:red;'>❌ Impossible de charger les inventaires depuis Firebase.</p>";
+        } catch (error) {
+            console.error("Erreur lecture inventaires :", error);
+            conteneur.innerHTML = "<p style='color:red;'>❌ Impossible de charger les inventaires depuis Firebase.</p>";
+        }
     }
-}
-
-
-
 
     window.filtrerAffichageInventaires = function() {
         const filtreImmat = document.getElementById("filtreImmatInv").value;
@@ -1010,18 +1081,18 @@ async function ouvrirHistoriqueInventaires() {
             ? tousLesInventaires 
             : tousLesInventaires.filter(inv => inv.immat === filtreImmat);
 
-        // Afficher le bouton de mise à jour uniquement si un véhicule précis est sélectionné et qu'il a un inventaire non clôturé
         if (filtreImmat !== "TOUS" && listeFiltree.length > 0) {
-            const dernierInv = listeFiltree[0]; // Déjà trié du plus récent au plus ancien
+            const dernierInv = listeFiltree[0];
             zoneAction.style.display = "block";
             if (dernierInv.cloture) {
                 btnMaj.disabled = true;
                 btnMaj.style.background = "#6c757d";
-                btnMaj.textContent = `✅ Stock de ${filtreImmat} déjà à jour (Inv. du ${dernierInv.dateAffichage})`;
+                const infoEntite = dernierInv.entiteAffectee ? ` → Intégré à ${dernierInv.entiteAffectee} (${dernierInv.anneeAffectee || ""})` : "";
+                btnMaj.textContent = `✅ Déjà validé (${dernierInv.dateAffichage})${infoEntite}`;
             } else {
                 btnMaj.disabled = false;
                 btnMaj.style.background = "#28a745";
-                btnMaj.textContent = `🔄 Mettre à jour stock début de ${filtreImmat} (Inv. du ${dernierInv.dateAffichage})`;
+                btnMaj.textContent = `🔄 Valider l'inventaire (${dernierInv.dateAffichage}) & Ajouter au Stock Global`;
             }
         } else {
             zoneAction.style.display = "none";
@@ -1034,12 +1105,18 @@ async function ouvrirHistoriqueInventaires() {
 
         let html = "";
         listeFiltree.forEach(inv => {
+            const techNom = cacheVehiculesMap[inv.immat] ? ` (${cacheVehiculesMap[inv.immat]})` : "";
+            const badgeEntite = inv.entiteAffectee 
+                ? `<span class="badge-entite" style="margin-left:8px;">🏢 Stock global ${inv.entiteAffectee} ${inv.anneeAffectee || ''}</span>` 
+                : '';
+
             html += `
                 <div style="border:1px solid #ccc; border-radius:6px; padding:15px; margin-bottom:15px; background:#fdfdfd;">
                     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
                         <div>
-                            <strong style="font-size:16px;">🚚 Véhicule : ${inv.immat}</strong> — 📅 ${inv.dateAffichage}
-                            ${inv.cloture ? `<span style="background:#d4edda; color:#155724; padding:2px 8px; border-radius:4px; font-size:12px; margin-left:8px; font-weight:bold;">✅ Reporté en stock début</span>` : ''}
+                            <strong style="font-size:16px;">🚚 Véhicule : ${inv.immat}${techNom}</strong> — 📅 ${inv.dateAffichage}
+                            ${inv.cloture ? `<span style="background:#d4edda; color:#155724; padding:2px 8px; border-radius:4px; font-size:12px; margin-left:8px; font-weight:bold;">✅ Validé & Reporté</span>` : ''}
+                            ${badgeEntite}
                             <br>
                             <span>Articles contrôlés : <strong>${inv.nbArticlesComptes}</strong> | </span>
                             <span style="color:${inv.nbErreurs > 0 ? '#d9534f' : '#28a745'}; font-weight:bold;">
@@ -1099,40 +1176,75 @@ async function ouvrirHistoriqueInventaires() {
 
     window.mettreAJourStockVehiculeSelectionne = async function() {
         const immatChoisie = document.getElementById("filtreImmatInv").value;
-        if (!immatChoisie || immatChoisie === "TOUS") return;
+        const entiteChoisie = document.getElementById("selectEntiteConsolidation").value;
+        const anneeChoisie = document.getElementById("inputAnneeConsolidation").value.trim();
 
-        // On récupère le dernier inventaire de ce véhicule
+        if (!immatChoisie || immatChoisie === "TOUS") return;
+        if (!entiteChoisie || !anneeChoisie) {
+            alert("Veuillez choisir une entité (AERIS, FCM ou FES) et une année valide.");
+            return;
+        }
+
         const inventairesVehicule = tousLesInventaires.filter(inv => inv.immat === immatChoisie);
         if (inventairesVehicule.length === 0) return;
 
         const dernierInv = inventairesVehicule[0];
         if (dernierInv.cloture) {
-            alert("Ce dernier inventaire a déjà été appliqué au stock début.");
+            alert("Ce dernier inventaire a déjà été validé et consolidé.");
             return;
         }
 
-        const msg = 
-            `⚠️ MISE À JOUR DU STOCK DÉBUT — VÉHICULE ${immatChoisie}\n\n` +
-            `Basé sur le dernier inventaire du : ${dernierInv.dateAffichage}\n` +
-            `Articles concernés : ${dernierInv.nbArticlesComptes} article(s) inventorié(s)\n\n` +
-            `• Stock Début = Stock Réel compté\n` +
-            `• Entrées = 0 et Sorties = 0\n\n` +
-            `Confirmez-vous la mise à jour pour le véhicule ${immatChoisie} ?`;
-
-        if (!confirm(msg)) return;
-
-        const btnMaj = document.getElementById("btnMajStockVehiculeSelect");
-        btnMaj.disabled = true;
-        btnMaj.textContent = "⏳ Mise à jour en cours...";
+        const docGlobalId = `${entiteChoisie}_${anneeChoisie}`;
+        const nomStockGlobal = `Stock global ${entiteChoisie} ${anneeChoisie}`;
 
         try {
+            const globalRef = doc(db, "stocks_globaux", docGlobalId);
+            const globalSnap = await getDoc(globalRef);
+
+            if (globalSnap.exists() && globalSnap.data().archive === true) {
+                alert(`🔒 ACTION BLOQUÉE !\n\nLe "${nomStockGlobal}" a déjà été validé et archivé définitivement.\nPour y ajouter un inventaire, vous devez d'abord déverrouiller cette archive dans le menu "🏢 Stocks Globaux & Archives".`);
+                return;
+            }
+
+            const techNom = cacheVehiculesMap[immatChoisie] ? ` (${cacheVehiculesMap[immatChoisie]})` : "";
+            const msg = 
+                `⚠️ VALIDATION INVENTAIRE & CONSOLIDATION SOCIÉTÉ\n\n` +
+                `• Véhicule / Technicien : ${immatChoisie}${techNom}\n` +
+                `• Inventaire du : ${dernierInv.dateAffichage} (${dernierInv.nbArticlesComptes} articles)\n` +
+                `• Entité d'affectation : ${NOMS_ENTITES[entiteChoisie]}\n` +
+                `• Base cible : "${nomStockGlobal}"\n\n` +
+                `Cette action va :\n` +
+                `1. Remettre à jour le stock début du véhicule ${immatChoisie}\n` +
+                `2. Additionner les quantités comptées au "${nomStockGlobal}"\n\n` +
+                `Confirmez-vous cette validation ?`;
+
+            if (!confirm(msg)) return;
+
+            const btnMaj = document.getElementById("btnMajStockVehiculeSelect");
+            btnMaj.disabled = true;
+            btnMaj.textContent = "⏳ Consolidation en cours...";
+
+            let dataGlobal = globalSnap.exists() ? globalSnap.data() : {
+                nom: nomStockGlobal,
+                entite: entiteChoisie,
+                annee: anneeChoisie,
+                archive: false,
+                dateArchivage: null,
+                vehiculesIntegres: [],
+                articles: {}
+            };
+
+            if (!dataGlobal.articles) dataGlobal.articles = {};
+            if (!dataGlobal.vehiculesIntegres) dataGlobal.vehiculesIntegres = [];
+
             const batch = writeBatch(db);
             let nbModifies = 0;
 
             if (dernierInv.lignes) {
                 dernierInv.lignes.forEach(ligne => {
+                    const stockReel = Number(ligne.stockReel) || 0;
+
                     if (ligne.firebaseId) {
-                        const stockReel = Number(ligne.stockReel);
                         batch.update(doc(db, "stocks", ligne.firebaseId), {
                             debut: stockReel,
                             entrees: 0,
@@ -1141,213 +1253,652 @@ async function ouvrirHistoriqueInventaires() {
                         });
                         nbModifies++;
                     }
+
+                    const refCle = (ligne.reference || ligne.refCodial || "SANS_REF").trim().toUpperCase().replace(/[.#$/[\]]/g, "_");
+                    
+                    if (!dataGlobal.articles[refCle]) {
+                        dataGlobal.articles[refCle] = {
+                            reference: ligne.reference || "",
+                            refCodial: ligne.refCodial || "",
+                            fournisseur: ligne.fournisseur || "",
+                            denomination: ligne.denomination || ligne.intitule || "",
+                            quantiteTotale: 0
+                        };
+                    }
+                    dataGlobal.articles[refCle].quantiteTotale = Number(dataGlobal.articles[refCle].quantiteTotale || 0) + stockReel;
                 });
             }
 
+            dataGlobal.vehiculesIntegres.push({
+                immat: immatChoisie,
+                technicien: cacheVehiculesMap[immatChoisie] || "",
+                inventaireId: dernierInv.id,
+                dateInventaire: dernierInv.dateAffichage,
+                dateIntegration: new Date().toLocaleString('fr-FR')
+            });
+            dataGlobal.derniereMaj = new Date().toLocaleString('fr-FR');
+
+            batch.set(globalRef, dataGlobal);
+
             batch.update(doc(db, "inventaires", dernierInv.id), {
                 cloture: true,
-                dateCloture: new Date().toLocaleString('fr-FR')
+                dateCloture: new Date().toLocaleString('fr-FR'),
+                entiteAffectee: entiteChoisie,
+                anneeAffectee: anneeChoisie
             });
 
             await batch.commit();
 
             dernierInv.cloture = true;
+            dernierInv.entiteAffectee = entiteChoisie;
+            dernierInv.anneeAffectee = anneeChoisie;
+
             filtrerAffichageInventaires();
             await chargerStocks();
 
-            alert(`✅ Stock début mis à jour pour ${nbModifies} article(s) du véhicule ${immatChoisie} !`);
+            alert(`✅ Validation réussie !\n\n• Stock début mis à jour pour ${immatChoisie} (${nbModifies} articles)\n• Quantités ajoutées à "${nomStockGlobal}"`);
 
         } catch (error) {
-            console.error("Erreur mise à jour stock véhicule :", error);
-            alert("❌ Erreur lors de la mise à jour : " + error.message);
+            console.error("Erreur consolidation stock :", error);
+            alert("❌ Erreur lors de la consolidation : " + error.message);
+            const btnMaj = document.getElementById("btnMajStockVehiculeSelect");
             btnMaj.disabled = false;
+            btnMaj.textContent = "🔄 Valider l'inventaire & Ajouter au Stock Global";
         }
     };
 
-function imprimerUnInventaire(invId) {
-    const inv = tousLesInventaires.find(i => i.id === invId);
-    if (!inv) return;
-    const tableauHtml = document.getElementById(`detail_inv_${invId}`).innerHTML;
-    const fenetre = window.open("", "", "width=900,height=650");
-    fenetre.document.write(`
-        <html>
-            <head>
-                <title>Rapport d'inventaire - ${inv.immat}</title>
-                <style>
-                    body { font-family: Arial, sans-serif; padding: 20px; }
-                    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
-                    th { background: #d9534f !important; color: white !important; padding: 7px; -webkit-print-color-adjust: exact; }
-                    td { border: 1px solid #ccc; padding: 6px; }
-                </style>
-            </head>
-            <body>
-                <h2>Rapport d'erreurs d'inventaire — Véhicule ${inv.immat}</h2>
-                <p><strong>Date :</strong> ${inv.dateAffichage} | <strong>Articles contrôlés :</strong> ${inv.nbArticlesComptes} | <strong>Erreurs :</strong> ${inv.nbErreurs}</p>
-                ${inv.nbErreurs > 0 ? tableauHtml : '<p>Aucune erreur de stock constatée.</p>'}
-            </body>
-        </html>
-    `);
-    fenetre.document.close();
-    fenetre.print();
-}
-
-async function supprimerUnInventaire(invId) {
-    const inv = tousLesInventaires.find(i => i.id === invId);
-    if (inv && inv.cloture) {
-        alert("🔒 Action impossible : cet inventaire est clôturé et verrouillé dans l'historique.");
-        return;
+    function imprimerUnInventaire(invId) {
+        const inv = tousLesInventaires.find(i => i.id === invId);
+        if (!inv) return;
+        const tableauHtml = document.getElementById(`detail_inv_${invId}`).innerHTML;
+        const fenetre = window.open("", "", "width=900,height=650");
+        fenetre.document.write(`
+            <html>
+                <head>
+                    <title>Rapport d'inventaire - ${inv.immat}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+                        th { background: #d9534f !important; color: white !important; padding: 7px; -webkit-print-color-adjust: exact; }
+                        td { border: 1px solid #ccc; padding: 6px; }
+                    </style>
+                </head>
+                <body>
+                    <h2>Rapport d'erreurs d'inventaire — Véhicule ${inv.immat}</h2>
+                    <p><strong>Date :</strong> ${inv.dateAffichage} | <strong>Articles contrôlés :</strong> ${inv.nbArticlesComptes} | <strong>Erreurs :</strong> ${inv.nbErreurs}</p>
+                    ${inv.entiteAffectee ? `<p><strong>Affecté au stock global :</strong> Stock global ${inv.entiteAffectee} ${inv.anneeAffectee || ''}</p>` : ''}
+                    ${inv.nbErreurs > 0 ? tableauHtml : '<p>Aucune erreur de stock constatée.</p>'}
+                </body>
+            </html>
+        `);
+        fenetre.document.close();
+        fenetre.print();
     }
-    if (!confirm("Voulez-vous vraiment supprimer cet inventaire de l'historique ?")) return;
-    try {
-        await deleteDoc(doc(db, "inventaires", invId));
-        tousLesInventaires = tousLesInventaires.filter(i => i.id !== invId);
-        filtrerAffichageInventaires();
-    } catch (error) {
-        console.error("Erreur suppression inventaire :", error);
-        alert("Erreur lors de la suppression.");
+
+    async function supprimerUnInventaire(invId) {
+        const inv = tousLesInventaires.find(i => i.id === invId);
+        if (inv && inv.cloture) {
+            alert("🔒 Action impossible : cet inventaire est validé et verrouillé dans l'historique.");
+            return;
+        }
+        if (!confirm("Voulez-vous vraiment supprimer cet inventaire de l'historique ?")) return;
+        try {
+            await deleteDoc(doc(db, "inventaires", invId));
+            tousLesInventaires = tousLesInventaires.filter(i => i.id !== invId);
+            filtrerAffichageInventaires();
+        } catch (error) {
+            console.error("Erreur suppression inventaire :", error);
+            alert("Erreur lors de la suppression.");
+        }
     }
-}
+    /* =========================================================================
+       2. STOCKS GLOBAUX PAR ENTITÉ (AERIS / FCM / FES), ARCHIVAGE & RÉÉDITION
+    ========================================================================= */
+    let stockGlobalCourant = null;
+    let toutesLesArchivesGlobales = [];
 
+    window.ouvrirStocksGlobaux = async function() {
+        const modal = document.getElementById("modalStocksGlobaux");
+        modal.style.display = "block";
+        document.getElementById("inputAnneeGlobale").value = new Date().getFullYear();
+        await chargerRepertoireArchives();
+        await chargerVueStockGlobal();
+    };
 
-/* ===================================
-   2. GESTION DES STOCKS MINIMUMS (CHEF DE BUREAU)
-=================================== */
-let tousLesStocksVehicules = [];
+    window.chargerRepertoireArchives = async function() {
+        const tbody = document.getElementById("tbodyRepertoireArchives");
+        tbody.innerHTML = `<tr><td colspan="6" style="padding:10px; text-align:center;">⏳ Chargement des archives...</td></tr>`;
 
-async function ouvrirGestionMinimums() {
-    const modal = document.getElementById("modalGestionMin");
-    const tbody = document.getElementById("tbodyGestionMin");
-    modal.style.display = "block";
-    tbody.innerHTML = `<tr><td colspan="7" style="padding:15px; text-align:center;">⏳ Chargement des stocks de tous les véhicules...</td></tr>`;
-
-    try {
-        const snapshot = await getDocs(collection(db, "stocks"));
-        tousLesStocksVehicules = [];
-        const immatsSet = new Set();
-
-         snapshot.forEach(docSnap => {
-            const d = docSnap.data();
-            const qteActuelle = d.quantite !== undefined 
-                ? Number(d.quantite) 
-                : (Number(d.debut || 0) + Number(d.entrees || 0) - Number(d.sorties || 0));
-
-            tousLesStocksVehicules.push({
-                id: docSnap.id,
-                immat: d.immat || "Sans immat",
-                refCodial: d.refCodial || d.codial || "",
-                reference: d.reference || "",
-                denomination: d.denomination || d.intitule || "",
-                stockActuel: qteActuelle,
-                minimum: Number(d.minimum || 0)
+        try {
+            const snap = await getDocs(collection(db, "stocks_globaux"));
+            toutesLesArchivesGlobales = [];
+            snap.forEach(d => {
+                toutesLesArchivesGlobales.push({ id: d.id, ...d.data() });
             });
 
-            if (d.immat) immatsSet.add(d.immat);
+            toutesLesArchivesGlobales.sort((a, b) => (b.annee || "").localeCompare(a.annee || "") || (a.entite || "").localeCompare(b.entite || ""));
+
+            if (toutesLesArchivesGlobales.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="padding:10px; text-align:center;">Aucun stock global consolidé pour le moment.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = "";
+            toutesLesArchivesGlobales.forEach(arch => {
+                const tr = document.createElement("tr");
+                const badgeStatut = arch.archive 
+                    ? `<span style="background:#d4edda; color:#155724; padding:3px 8px; border-radius:4px; font-weight:bold;">🔒 Archivé</span>`
+                    : `<span style="background:#fff3cd; color:#856404; padding:3px 8px; border-radius:4px; font-weight:bold;">📝 En cours</span>`;
+
+                tr.innerHTML = `
+                    <td style="padding:8px; font-weight:bold;">${arch.nom || `Stock global ${arch.entite} ${arch.annee}`}</td>
+                    <td style="padding:8px;">${arch.entite}</td>
+                    <td style="padding:8px;">${arch.annee}</td>
+                    <td style="padding:8px;">${badgeStatut}</td>
+                    <td style="padding:8px;">${arch.dateArchivage || "-"}</td>
+                    <td style="padding:8px; text-align:center;">
+                        <button onclick="selectionnerArchiveDepuisRepertoire('${arch.entite}', '${arch.annee}')" style="background:#004A99; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; margin-right:4px;">👁️ Ouvrir</button>
+                        <button onclick="exporterStockGlobalExcel('${arch.id}')" style="background:#217346; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; margin-right:4px;">📊 Excel</button>
+                        <button onclick="exporterStockGlobalPDF('${arch.id}')" style="background:#d9534f; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">📄 PDF</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } catch (error) {
+            console.error("Erreur répertoire archives :", error);
+            tbody.innerHTML = `<tr><td colspan="6" style="color:red; padding:10px;">Erreur de chargement.</td></tr>`;
+        }
+    };
+
+    window.selectionnerArchiveDepuisRepertoire = async function(entite, annee) {
+        document.getElementById("selectEntiteGlobale").value = entite;
+        document.getElementById("inputAnneeGlobale").value = annee;
+        await chargerVueStockGlobal();
+    };
+    window.chargerVueStockGlobal = async function() {
+        const entite = document.getElementById("selectEntiteGlobale").value;
+        const annee = document.getElementById("inputAnneeGlobale").value.trim();
+        const docId = `${entite}_${annee}`;
+        const nomAttendu = `Stock global ${entite} ${annee}`;
+
+        const infoTxt = document.getElementById("infoArchiveTexte");
+        const zoneBtns = document.getElementById("boutonsActionsArchive");
+        const zoneVehicules = document.getElementById("listeVehiculesIntegres");
+        const tbody = document.getElementById("tbodyStockGlobal");
+
+        infoTxt.innerHTML = "⏳ Chargement...";
+        zoneBtns.innerHTML = "";
+        tbody.innerHTML = "";
+
+        try {
+            const snap = await getDoc(doc(db, "stocks_globaux", docId));
+            if (!snap.exists()) {
+                stockGlobalCourant = null;
+                infoTxt.innerHTML = `<strong>${nomAttendu}</strong> — <span style="color:#666;">Aucun inventaire technicien n'a encore été affecté à cette entité pour ${annee}.</span>`;
+                zoneVehicules.innerHTML = "Aucun véhicule consolidé.";
+                tbody.innerHTML = `<tr><td colspan="5" style="padding:15px; text-align:center; color:#666;">Aucune donnée disponible. Validez d'abord l'inventaire d'un technicien en l'affectant à <strong>${entite}</strong>.</td></tr>`;
+                return;
+            }
+
+            stockGlobalCourant = { id: snap.id, ...snap.data() };
+            const estArchive = stockGlobalCourant.archive === true;
+
+            if (estArchive) {
+                infoTxt.innerHTML = `
+                    <strong style="font-size:16px; color:#155724;">🔒 ${stockGlobalCourant.nom}</strong>
+                    <span style="background:#d4edda; color:#155724; padding:3px 10px; border-radius:4px; font-weight:bold; margin-left:8px;">ARCHIVÉ & VERROUILLÉ</span><br>
+                    <span style="font-size:13px; color:#333;">Validé par le Chef de Bureau le : <strong>${stockGlobalCourant.dateArchivage}</strong></span>
+                `;
+                zoneBtns.innerHTML = `
+                    <button onclick="exporterStockGlobalExcel('${docId}')" style="background:#217346; color:white; border:none; padding:8px 14px; border-radius:4px; font-weight:bold; cursor:pointer;">📊 Rééditer Excel (.csv)</button>
+                    <button onclick="exporterStockGlobalPDF('${docId}')" style="background:#d9534f; color:white; border:none; padding:8px 14px; border-radius:4px; font-weight:bold; cursor:pointer;">📄 Rééditer PDF</button>
+                    <button onclick="basculerArchivageStockGlobal('${docId}', false)" style="background:#6c757d; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer;" title="Déverrouiller pour correction">🔓 Déverrouiller</button>
+                `;
+            } else {
+                infoTxt.innerHTML = `
+                    <strong style="font-size:16px; color:#004A99;">📝 ${stockGlobalCourant.nom}</strong>
+                    <span style="background:#fff3cd; color:#856404; padding:3px 10px; border-radius:4px; font-weight:bold; margin-left:8px;">EN COURS DE CONSOLIDATION</span><br>
+                    <span style="font-size:13px; color:#555;">Dernière mise à jour : ${stockGlobalCourant.derniereMaj || "-"}</span>
+                `;
+                zoneBtns.innerHTML = `
+                    <button onclick="basculerArchivageStockGlobal('${docId}', true)" style="background:#28a745; color:white; border:none; padding:8px 15px; border-radius:4px; font-weight:bold; cursor:pointer;">✅ Valider et Archiver définitivement</button>
+                    <button onclick="exporterStockGlobalExcel('${docId}')" style="background:#217346; color:white; border:none; padding:8px 14px; border-radius:4px; font-weight:bold; cursor:pointer;">📊 Export Excel</button>
+                    <button onclick="exporterStockGlobalPDF('${docId}')" style="background:#d9534f; color:white; border:none; padding:8px 14px; border-radius:4px; font-weight:bold; cursor:pointer;">📄 Export PDF</button>
+                `;
+            }
+
+            const vehicules = stockGlobalCourant.vehiculesIntegres || [];
+            if (vehicules.length > 0) {
+                const listeTxt = vehicules.map(v => `<strong>${v.immat}</strong>${v.technicien ? ` (${v.technicien})` : ''} [Inv. ${v.dateInventaire}]`).join(" • ");
+                zoneVehicules.innerHTML = `🚚 <strong>Véhicules / Techniciens intégrés (${vehicules.length}) :</strong> ${listeTxt}`;
+            } else {
+                zoneVehicules.innerHTML = "Aucun véhicule enregistré.";
+            }
+
+            filtrerTableauStockGlobal();
+
+        } catch (error) {
+            console.error("Erreur vue stock global :", error);
+            infoTxt.innerHTML = `<span style="color:red;">❌ Erreur lors du chargement du stock global.</span>`;
+        }
+    };
+    window.filtrerTableauStockGlobal = function() {
+        const tbody = document.getElementById("tbodyStockGlobal");
+        tbody.innerHTML = "";
+
+        if (!stockGlobalCourant || !stockGlobalCourant.articles) {
+            return;
+        }
+
+        const texte = document.getElementById("searchArticleGlobal").value.trim().toLowerCase();
+        const listeArticles = Object.values(stockGlobalCourant.articles);
+
+        listeArticles.sort((a, b) => (a.refCodial || a.reference || "").localeCompare(b.refCodial || b.reference || ""));
+
+        const filtres = listeArticles.filter(art => {
+            return (art.refCodial || "").toLowerCase().includes(texte) ||
+                   (art.reference || "").toLowerCase().includes(texte) ||
+                   (art.fournisseur || "").toLowerCase().includes(texte) ||
+                   (art.denomination || "").toLowerCase().includes(texte);
         });
 
-        // Tri par véhicule puis par référence Codial
-        tousLesStocksVehicules.sort((a, b) => a.immat.localeCompare(b.immat) || a.refCodial.localeCompare(b.refCodial));
+        if (filtres.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" style="padding:12px; text-align:center;">Aucun article correspondant.</td></tr>`;
+            return;
+        }
 
-        const select = document.getElementById("selectVehiculeMin");
-        select.innerHTML = `<option value="TOUS">Tous les véhicules (${tousLesStocksVehicules.length} lignes)</option>`;
-        Array.from(immatsSet).sort().forEach(immat => {
-            select.innerHTML += `<option value="${immat}">${immat}</option>`;
+        filtres.forEach(art => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td style="padding:8px;">${art.refCodial || "-"}</td>
+                <td style="padding:8px; font-weight:bold;">${art.reference || "-"}</td>
+                <td style="padding:8px;">${art.fournisseur || "-"}</td>
+                <td style="padding:8px;">${art.denomination || "-"}</td>
+                <td style="padding:8px; text-align:center; font-weight:bold; font-size:15px; color:#004A99;">${art.quantiteTotale}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    };
+
+    window.basculerArchivageStockGlobal = async function(docId, archiver) {
+        const snap = await getDoc(doc(db, "stocks_globaux", docId));
+        if (!snap.exists()) return;
+        const data = snap.data();
+
+        if (archiver) {
+            const confirmMsg = 
+                `🔒 VALIDATION ET ARCHIVAGE DÉFINITIF\n\n` +
+                `Vous êtes sur le point d'archiver : "${data.nom}"\n` +
+                `Société : ${NOMS_ENTITES[data.entite] || data.entite}\n` +
+                `Véhicules consolidés : ${(data.vehiculesIntegres || []).length}\n\n` +
+                `Une fois archivé, plus aucun inventaire technicien ne pourra être ajouté à ce stock annuel (sauf déverrouillage manuel).\n\n` +
+                `Confirmez-vous l'archivage ?`;
+            if (!confirm(confirmMsg)) return;
+
+            await updateDoc(doc(db, "stocks_globaux", docId), {
+                archive: true,
+                dateArchivage: new Date().toLocaleString('fr-FR')
+            });
+            alert(`✅ "${data.nom}" a été validé et archivé avec succès !`);
+        } else {
+            if (!confirm(`⚠️ DÉVERROUILLAGE D'ARCHIVE\n\nVoulez-vous vraiment réouvrir "${data.nom}" pour modification ?`)) return;
+            await updateDoc(doc(db, "stocks_globaux", docId), {
+                archive: false
+            });
+            alert(`🔓 "${data.nom}" est de nouveau ouvert en consolidation.`);
+        }
+
+        await chargerRepertoireArchives();
+        await chargerVueStockGlobal();
+    };
+    window.exporterStockGlobalExcel = async function(docId) {
+        try {
+            const snap = await getDoc(doc(db, "stocks_globaux", docId));
+            if (!snap.exists()) {
+                alert("Aucune donnée à exporter.");
+                return;
+            }
+            const data = snap.data();
+            const articles = Object.values(data.articles || {});
+            articles.sort((a, b) => (a.refCodial || a.reference || "").localeCompare(b.refCodial || b.reference || ""));
+
+            const nomBase = data.nom.replace(/\s+/g, "_");
+            const dateEdit = new Date().toLocaleString('fr-FR');
+            const statutTxt = data.archive ? `ARCHIVÉ le ${data.dateArchivage}` : 'EN COURS';
+            const societeTxt = NOMS_ENTITES[data.entite] || data.entite;
+
+            // --- 1. GÉNÉRATION DU FICHIER EXCEL NATIF (.xls) SANS BIBLIOTHÈQUE EXTERNE ---
+            let lignesTableXLS = "";
+            articles.forEach(art => {
+                lignesTableXLS += `
+                    <tr>
+                        <td style="mso-number-format:'\\@';">${art.refCodial || ""}</td>
+                        <td style="mso-number-format:'\\@'; font-weight:bold;">${art.reference || ""}</td>
+                        <td>${art.fournisseur || ""}</td>
+                        <td>${art.denomination || ""}</td>
+                        <td style="text-align:center; font-weight:bold;">${Number(art.quantiteTotale || 0)}</td>
+                    </tr>`;
+            });
+
+            const htmlExcel = `
+                <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://w3.org">
+                <head><meta charset="UTF-8"></head>
+                <body>
+                    <table border="1">
+                        <tr>
+                            <td colspan="2" style="font-weight:bold; font-size:14pt; background:#004A99; color:#ffffff;">${data.nom}</td>
+                            <td style="font-weight:bold;">${societeTxt}</td>
+                            <td>Statut : ${statutTxt}</td>
+                            <td>Édité le : ${dateEdit}</td>
+                        </tr>
+                        <tr><td colspan="5"></td></tr>
+                        <tr style="background:#004A99; color:#ffffff; font-weight:bold;">
+                            <th>Réf. Codial</th>
+                            <th>Réf. Fabricant</th>
+                            <th>Fournisseur</th>
+                            <th>Dénomination</th>
+                            <th>Quantité Totale</th>
+                        </tr>
+                        ${lignesTableXLS}
+                    </table>
+                </body>
+                </html>`;
+
+            const blobXLS = new Blob(["\uFEFF" + htmlExcel], { type: "application/vnd.ms-excel;charset=utf-8;" });
+            const urlXLS = URL.createObjectURL(blobXLS);
+            const lienXLS = document.createElement("a");
+            lienXLS.href = urlXLS;
+            lienXLS.download = `${nomBase}.xls`;
+            document.body.appendChild(lienXLS);
+            lienXLS.click();
+            document.body.removeChild(lienXLS);
+            URL.revokeObjectURL(urlXLS);
+
+            // --- 2. GÉNÉRATION DU FICHIER CSV (.csv) ---
+            let lignesCSV = [];
+            lignesCSV.push(`"${data.nom}";"Entité : ${societeTxt}";"Statut : ${statutTxt}";"Édité le : ${dateEdit}"`);
+            lignesCSV.push("");
+            lignesCSV.push("Réf. Codial;Réf. Fabricant;Fournisseur;Dénomination;Quantité Totale");
+
+            articles.forEach(art => {
+                const clean = (val) => `"${String(val || "").replace(/"/g, '""')}"`;
+                lignesCSV.push([
+                    clean(art.refCodial),
+                    clean(art.reference),
+                    clean(art.fournisseur),
+                    clean(art.denomination),
+                    art.quantiteTotale
+                ].join(";"));
+            });
+
+            setTimeout(() => {
+                const blobCSV = new Blob(["\uFEFF" + lignesCSV.join("\r\n")], { type: "text/csv;charset=utf-8;" });
+                const urlCSV = URL.createObjectURL(blobCSV);
+                const lienCSV = document.createElement("a");
+                lienCSV.href = urlCSV;
+                lienCSV.download = `${nomBase}.csv`;
+                document.body.appendChild(lienCSV);
+                lienCSV.click();
+                document.body.removeChild(lienCSV);
+                URL.revokeObjectURL(urlCSV);
+            }, 350);
+
+        } catch (error) {
+            console.error("Erreur export Excel/CSV :", error);
+            alert("Erreur lors de la génération des fichiers : " + error.message);
+        }
+    };
+    window.exporterStockGlobalPDF = async function(docId) {
+        try {
+            const snap = await getDoc(doc(db, "stocks_globaux", docId));
+            if (!snap.exists()) {
+                alert("Aucune donnée à imprimer.");
+                return;
+            }
+            const data = snap.data();
+            const articles = Object.values(data.articles || {});
+            articles.sort((a, b) => (a.refCodial || a.reference || "").localeCompare(b.refCodial || b.reference || ""));
+
+            const vehiculesListe = (data.vehiculesIntegres || [])
+                .map(v => `${v.immat}${v.technicien ? ' (' + v.technicien + ')' : ''}`)
+                .join(", ") || "Aucun";
+
+            let lignesHtml = "";
+            let totalPieces = 0;
+            articles.forEach(art => {
+                const qte = Number(art.quantiteTotale || 0);
+                totalPieces += qte;
+                lignesHtml += `
+                    <tr>
+                        <td>${art.refCodial || "-"}</td>
+                        <td><strong>${art.reference || "-"}</strong></td>
+                        <td>${art.fournisseur || "-"}</td>
+                        <td>${art.denomination || "-"}</td>
+                        <td style="text-align:center; font-weight:bold;">${qte}</td>
+                    </tr>
+                `;
+            });
+            const dateEdition = new Date().toLocaleString('fr-FR');
+            const mentionStatut = data.archive 
+                ? `DOCUMENT ARCHIVÉ — Validé le ${data.dateArchivage} | Réédité le ${dateEdition}`
+                : `DOCUMENT PROVISOIRE (Non archivé) — Édité le ${dateEdition}`;
+
+            const fenetre = window.open("", "", "width=950,height=700");
+            fenetre.document.write(`
+                <html>
+                    <head>
+                        <title>${data.nom}</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; padding: 25px; color: #222; }
+                            .header-doc { border-bottom: 3px solid #004A99; padding-bottom: 12px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: flex-start; }
+                            .societe { font-size: 20px; font-weight: bold; color: #004A99; }
+                            .titre-stock { font-size: 22px; font-weight: bold; margin-top: 5px; }
+                            .meta { background: #f4f6f9; padding: 10px 14px; border-radius: 5px; font-size: 13px; margin-bottom: 15px; border: 1px solid #ddd; }
+                            table { width: 100%; border-collapse: collapse; font-size: 12px; }
+                            th { background: #004A99 !important; color: white !important; padding: 8px; text-align: left; -webkit-print-color-adjust: exact; }
+                            td { border: 1px solid #ccc; padding: 6px 8px; }
+                            tr:nth-child(even) { background-color: #f9f9f9 !important; -webkit-print-color-adjust: exact; }
+                            .footer-doc { margin-top: 25px; font-size: 12px; color: #555; border-top: 1px solid #ccc; padding-top: 10px; display: flex; justify-content: space-between; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="header-doc">
+                            <div>
+                                <div class="societe">${NOMS_ENTITES[data.entite] || data.entite}</div>
+                                <div class="titre-stock">${data.nom}</div>
+                            </div>
+                            <div style="text-align:right; font-size:13px;">
+                                <strong>Année d'exercice :</strong> ${data.annee}<br>
+                                <strong>Références distinctes :</strong> ${articles.length}<br>
+                                <strong>Cumul unités :</strong> ${totalPieces}
+                            </div>
+                        </div>
+                        <div class="meta">
+                            <strong>Statut :</strong> ${mentionStatut}<br>
+                            <strong>Véhicules / Techniciens consolidés :</strong> ${vehiculesListe}
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Réf. Codial</th>
+                                    <th>Réf. Fabricant</th>
+                                    <th>Fournisseur</th>
+                                    <th>Dénomination</th>
+                                    <th style="text-align:center;">Quantité Totale</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${lignesHtml || '<tr><td colspan="5" style="text-align:center;">Aucun article en stock.</td></tr>'}
+                            </tbody>
+                        </table>
+                        <div class="footer-doc">
+                            <span>${mentionStatut}</span>
+                            <span>Visa Chef de Bureau : ______________________</span>
+                        </div>
+                    </body>
+                </html>
+            `);
+            fenetre.document.close();
+            fenetre.print();
+        } catch (error) {
+            console.error("Erreur export PDF :", error);
+            alert("Erreur lors de la génération du PDF.");
+        }
+    };
+    /* =========================================================================
+       3. GESTION DES STOCKS MINIMUMS (CHEF DE BUREAU)
+    ========================================================================= */
+    let tousLesStocksVehicules = [];
+
+    async function ouvrirGestionMinimums() {
+        const modal = document.getElementById("modalGestionMin");
+        const tbody = document.getElementById("tbodyGestionMin");
+        modal.style.display = "block";
+        tbody.innerHTML = `<tr><td colspan="7" style="padding:15px; text-align:center;">⏳ Chargement des stocks de tous les véhicules...</td></tr>`;
+
+        try {
+            const snapshot = await getDocs(collection(db, "stocks"));
+            tousLesStocksVehicules = [];
+            const immatsSet = new Set();
+
+            snapshot.forEach(docSnap => {
+                const d = docSnap.data();
+                const qteActuelle = d.quantite !== undefined 
+                    ? Number(d.quantite) 
+                    : (Number(d.debut || 0) + Number(d.entrees || 0) - Number(d.sorties || 0));
+
+                tousLesStocksVehicules.push({
+                    id: docSnap.id,
+                    immat: d.immat || "Sans immat",
+                    refCodial: d.refCodial || d.codial || "",
+                    reference: d.reference || "",
+                    denomination: d.denomination || d.intitule || "",
+                    stockActuel: qteActuelle,
+                    minimum: Number(d.minimum || 0)
+                });
+
+                if (d.immat) immatsSet.add(d.immat);
+            });
+
+            tousLesStocksVehicules.sort((a, b) => a.immat.localeCompare(b.immat) || a.refCodial.localeCompare(b.refCodial));
+
+            const select = document.getElementById("selectVehiculeMin");
+            select.innerHTML = `<option value="TOUS">Tous les véhicules (${tousLesStocksVehicules.length} lignes)</option>`;
+            Array.from(immatsSet).sort().forEach(immat => {
+                select.innerHTML += `<option value="${immat}">${immat}</option>`;
+            });
+
+            document.getElementById("searchMinArticle").value = "";
+            filtrerTableauMinimums();
+
+        } catch (error) {
+            console.error("Erreur chargement stocks minimums :", error);
+            tbody.innerHTML = `<tr><td colspan="7" style="padding:15px; color:red;">❌ Erreur de chargement depuis Firebase.</td></tr>`;
+        }
+    }
+
+    function filtrerTableauMinimums() {
+        const immatFiltre = document.getElementById("selectVehiculeMin").value;
+        const texte = document.getElementById("searchMinArticle").value.trim().toLowerCase();
+        const tbody = document.getElementById("tbodyGestionMin");
+
+        const filtres = tousLesStocksVehicules.filter(item => {
+            const matchImmat = immatFiltre === "TOUS" || item.immat === immatFiltre;
+            const matchTexte = !texte || 
+                item.refCodial.toLowerCase().includes(texte) ||
+                item.reference.toLowerCase().includes(texte) ||
+                item.denomination.toLowerCase().includes(texte);
+            return matchImmat && matchTexte;
         });
 
-        document.getElementById("searchMinArticle").value = "";
-        filtrerTableauMinimums();
+        tbody.innerHTML = "";
+        if (filtres.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" style="padding:15px; text-align:center;">Aucun article trouvé.</td></tr>`;
+            return;
+        }
 
-    } catch (error) {
-        console.error("Erreur chargement stocks minimums :", error);
-        tbody.innerHTML = `<tr><td colspan="7" style="padding:15px; color:red;">❌ Erreur de chargement depuis Firebase.</td></tr>`;
-    }
-}
-
-function filtrerTableauMinimums() {
-    const immatFiltre = document.getElementById("selectVehiculeMin").value;
-    const texte = document.getElementById("searchMinArticle").value.trim().toLowerCase();
-    const tbody = document.getElementById("tbodyGestionMin");
-
-    const filtres = tousLesStocksVehicules.filter(item => {
-        const matchImmat = immatFiltre === "TOUS" || item.immat === immatFiltre;
-        const matchTexte = !texte || 
-            item.refCodial.toLowerCase().includes(texte) ||
-            item.reference.toLowerCase().includes(texte) ||
-            item.denomination.toLowerCase().includes(texte);
-        return matchImmat && matchTexte;
-    });
-
-    tbody.innerHTML = "";
-    if (filtres.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" style="padding:15px; text-align:center;">Aucun article trouvé.</td></tr>`;
-        return;
-    }
-
-    filtres.forEach(item => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-            <td style="padding:6px; font-weight:bold;">${item.immat}</td>
-            <td style="padding:6px;">${item.refCodial}</td>
-            <td style="padding:6px;">${item.reference}</td>
-            <td style="padding:6px;">${item.denomination}</td>
-            <td style="padding:6px; text-align:center;">${item.stockActuel}</td>
-            <td style="padding:6px; text-align:center;">
-                <input type="number" min="0" id="input_min_${item.id}" value="${item.minimum}" style="width:80px; padding:5px; text-align:center; font-weight:bold; font-size:15px;">
-            </td>
-            <td style="padding:6px; text-align:center;">
-                <button id="btn_save_min_${item.id}" onclick="sauvegarderStockMinimum('${item.id}')" style="background:#28a745; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">
-                    💾 Enregistrer
-                </button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
-}
-
-async function sauvegarderStockMinimum(docId) {
-    const input = document.getElementById(`input_min_${docId}`);
-    const btn = document.getElementById(`btn_save_min_${docId}`);
-    const nouveauMin = Number(input.value);
-
-    if (isNaN(nouveauMin) || nouveauMin < 0) {
-        alert("Veuillez saisir un stock minimum valide (0 ou plus).");
-        return;
-    }
-
-    btn.disabled = true;
-    btn.textContent = "⏳...";
-
-    try {
-        await updateDoc(doc(db, "stocks", docId), {
-            minimum: nouveauMin
+        filtres.forEach(item => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td style="padding:6px; font-weight:bold;">${item.immat}</td>
+                <td style="padding:6px;">${item.refCodial}</td>
+                <td style="padding:6px;">${item.reference}</td>
+                <td style="padding:6px;">${item.denomination}</td>
+                <td style="padding:6px; text-align:center;">${item.stockActuel}</td>
+                <td style="padding:6px; text-align:center;">
+                    <input type="number" min="0" id="input_min_${item.id}" value="${item.minimum}" style="width:80px; padding:5px; text-align:center; font-weight:bold; font-size:15px;">
+                </td>
+                <td style="padding:6px; text-align:center;">
+                    <button id="btn_save_min_${item.id}" onclick="sauvegarderStockMinimum('${item.id}')" style="background:#28a745; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">
+                        💾 Enregistrer
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
         });
+    }
 
-        const article = tousLesStocksVehicules.find(i => i.id === docId);
-        if (article) article.minimum = nouveauMin;
+    async function sauvegarderStockMinimum(docId) {
+        const input = document.getElementById(`input_min_${docId}`);
+        const btn = document.getElementById(`btn_save_min_${docId}`);
+        const nouveauMin = Number(input.value);
 
-        btn.style.background = "#17a2b8";
-        btn.textContent = "✅ OK";
-        setTimeout(() => {
-            btn.style.background = "#28a745";
-            btn.textContent = "💾 Enregistrer";
+        if (isNaN(nouveauMin) || nouveauMin < 0) {
+            alert("Veuillez saisir un stock minimum valide (0 ou plus).");
+            return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = "⏳...";
+
+        try {
+            await updateDoc(doc(db, "stocks", docId), {
+                minimum: nouveauMin
+            });
+
+            const article = tousLesStocksVehicules.find(i => i.id === docId);
+            if (article) article.minimum = nouveauMin;
+
+            btn.style.background = "#17a2b8";
+            btn.textContent = "✅ OK";
+            setTimeout(() => {
+                btn.style.background = "#28a745";
+                btn.textContent = "💾 Enregistrer";
+                btn.disabled = false;
+            }, 1500);
+
+        } catch (error) {
+            console.error("Erreur mise à jour minimum :", error);
+            alert("⚠️ Erreur lors de l'enregistrement du stock minimum.");
             btn.disabled = false;
-        }, 1500);
-
-    } catch (error) {
-        console.error("Erreur mise à jour minimum :", error);
-        alert("⚠️ Erreur lors de l'enregistrement du stock minimum.");
-        btn.disabled = false;
-        btn.textContent = "💾 Enregistrer";
+            btn.textContent = "💾 Enregistrer";
+        }
     }
-}
 
-// Exposition des fonctions aux boutons HTML
-window.ouvrirHistoriqueInventaires = ouvrirHistoriqueInventaires;
-window.filtrerAffichageInventaires = filtrerAffichageInventaires;
-window.imprimerUnInventaire = imprimerUnInventaire;
-window.supprimerUnInventaire = supprimerUnInventaire;
-window.ouvrirGestionMinimums = ouvrirGestionMinimums;
-window.filtrerTableauMinimums = filtrerTableauMinimums;
-window.sauvegarderStockMinimum = sauvegarderStockMinimum;
+    // Exposition des fonctions aux boutons HTML
+    window.ouvrirHistoriqueInventaires = ouvrirHistoriqueInventaires;
+    window.filtrerAffichageInventaires = filtrerAffichageInventaires;
+    window.imprimerUnInventaire = imprimerUnInventaire;
+    window.supprimerUnInventaire = supprimerUnInventaire;
+    window.ouvrirGestionMinimums = ouvrirGestionMinimums;
+    window.filtrerTableauMinimums = filtrerTableauMinimums;
+    window.sauvegarderStockMinimum = sauvegarderStockMinimum;
+    window.quitterApplication = function() {
+        if (!confirm("Voulez-vous vraiment quitter l'application Gestion des Stocks ?")) {
+            return;
+        }
+        window.close();
+        // Sécurité : si Chrome empêche la fermeture d'un onglet ouvert directement, on affiche un écran de sortie propre
+        setTimeout(() => {
+            document.body.innerHTML = `
+                <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; background:#003366; color:white; font-family:Arial, sans-serif; text-align:center; padding:20px;">
+                    <h1 style="margin-bottom:15px;">✅ Session fermée</h1>
+                    <p style="font-size:16px; margin-bottom:25px;">Vous avez quitté l'application Gestion des Stocks - Chef de Bureau.<br>Vous pouvez fermer cet onglet en toute sécurité.</p>
+                    <button onclick="location.reload()" style="background:#28a745; color:white; border:none; padding:12px 24px; border-radius:5px; font-size:15px; font-weight:bold; cursor:pointer;">🔄 Rouvrir l'application</button>
+                </div>
+            `;
+        }, 200);
+    };
 
 </script>
 </body>
